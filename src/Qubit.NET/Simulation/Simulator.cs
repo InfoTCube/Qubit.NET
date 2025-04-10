@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Qubit.NET;
+namespace Qubit.NET.Simulation;
 
 /// <summary>
 /// Provides functionality to simulate quantum circuits.

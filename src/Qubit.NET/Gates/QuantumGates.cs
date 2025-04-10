@@ -16,7 +16,7 @@ public static class QuantumGates
     public static Complex[,] H => new Complex[,]
     {
         { InvSqrt2, InvSqrt2 },
-        { InvSqrt2, -1 * InvSqrt2 }
+        { InvSqrt2, -InvSqrt2 }
     };
 
     public static Complex[,] X => new Complex[,]
@@ -27,7 +27,7 @@ public static class QuantumGates
     
     public static Complex[,] Y => new Complex[,]
     {
-        { 0, -1 * Complex.ImaginaryOne },
+        { 0, -Complex.ImaginaryOne },
         { Complex.ImaginaryOne, 0 }
     };
 
@@ -43,10 +43,22 @@ public static class QuantumGates
         { 0, Complex.ImaginaryOne }
     };
 
+    public static Complex[,] Sdag => new Complex[,]
+    {
+        { 1, 0 },
+        { 0, -Complex.ImaginaryOne }
+    };
+
     public static Complex[,] T => new Complex[,]
     {
         { 1, 0 },
         { 0, TElement }
+    };
+
+    public static Complex[,] Tdag => new Complex[,]
+    {
+        { 1, 0 },
+        { 0, Complex.Conjugate(TElement) }
     };
 
     public static Complex[,] RX(double theta)
@@ -56,7 +68,7 @@ public static class QuantumGates
         
         return new Complex[,]
         {
-            { cosTheta, -1 * sinTheta },
+            { cosTheta, -sinTheta },
             { sinTheta, cosTheta }
         };
     }
@@ -68,7 +80,7 @@ public static class QuantumGates
         
         return new Complex[,]
         {
-            { cosTheta, -1 * sinTheta },
+            { cosTheta, -sinTheta },
             { sinTheta, cosTheta }
         };
     }
@@ -105,7 +117,7 @@ public static class QuantumGates
     {
         { 1, 0, 0, 0 },
         { 0, 1, 0, 0 },
-        { 0, 0, 0, -1 * Complex.ImaginaryOne },
+        { 0, 0, 0, -Complex.ImaginaryOne },
         { 0, 0, Complex.ImaginaryOne, 0 }
     };
     
@@ -114,7 +126,7 @@ public static class QuantumGates
         { 1, 0, 0, 0 },
         { 0, 1, 0, 0 },
         { 0, 0, InvSqrt2, InvSqrt2 },
-        { 0, 0, InvSqrt2, -1 * InvSqrt2 }
+        { 0, 0, InvSqrt2, -InvSqrt2 }
     };
 
     public static Complex[,] SWAP => new Complex[,]

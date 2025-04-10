@@ -64,61 +64,58 @@ public class QuantumCircuit
     /// The Hadamard gate creates a superposition of the basis states.
     /// </summary>
     /// <param name="qubit">The index of the qubit to apply the Hadamard gate to.</param>
-    public void H(int qubit)
-    {
-        ApplyGate(QuantumGates.H, qubit);
-    }
+    public void H(int qubit) => ApplyGate(QuantumGates.H, qubit);
 
     /// <summary>
     /// Applies the Pauli-X gate (X) to the specified qubit.
     /// The Pauli-X gate flips the state of the qubit (|0> ↔ |1>).
     /// </summary>
     /// <param name="qubit">The index of the qubit to apply the Pauli-X gate to.</param>
-    public void X(int qubit)
-    {
-        ApplyGate(QuantumGates.X, qubit);
-    }
+    public void X(int qubit) => ApplyGate(QuantumGates.X, qubit);
 
     /// <summary>
     /// Applies the Pauli-Y gate (Y) to the specified qubit.
     /// The Pauli-Y gate performs a bit-flip followed by a phase flip on the qubit.
     /// </summary>
     /// <param name="qubit">The index of the qubit to apply the Pauli-Y gate to.</param>
-    public void Y(int qubit)
-    {
-        ApplyGate(QuantumGates.Y, qubit);
-    }
-
+    public void Y(int qubit) => ApplyGate(QuantumGates.Y, qubit);
     
     /// <summary>
     /// Applies the Pauli-Z gate (Z) to the specified qubit.
     /// The Pauli-Z gate applies a phase flip to the qubit (|0> ↔ |1> with a phase of -1 for |1>).
     /// </summary>
     /// <param name="qubit">The index of the qubit to apply the Pauli-Z gate to.</param>
-    public void Z(int qubit)
-    {
-        ApplyGate(QuantumGates.Z, qubit);
-    }
+    public void Z(int qubit) => ApplyGate(QuantumGates.Z, qubit);
 
     /// <summary>
     /// Applies the S gate (phase gate) to the specified qubit.
     /// The S gate applies a phase shift of π/2 to the qubit, leaving |0⟩ unchanged and mapping |1⟩ to i·|1⟩.
     /// </summary>
     /// <param name="qubit">The index of the qubit to apply the S gate to.</param>
-    public void S(int qubit)
-    {
-        ApplyGate(QuantumGates.S, qubit);
-    }
+    public void S(int qubit) => ApplyGate(QuantumGates.S, qubit);
+
+    /// <summary>
+    /// Applies the S† gate (inverse phase gate) to the specified qubit.
+    /// The S† gate undoes the effect of the S gate by applying a phase shift of -π/2,
+    /// leaving |0⟩ unchanged and mapping |1⟩ to -i·|1⟩.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the S† gate to.</param>
+    public void Sdag(int qubit) => ApplyGate(QuantumGates.Sdag, qubit);
 
     /// <summary>
     /// Applies the T gate (π/4 phase gate) to the specified qubit.
     /// The T gate applies a phase shift of π/4 to the qubit, leaving |0⟩ unchanged and mapping |1⟩ to e^(iπ/4)·|1⟩.
     /// </summary>
     /// <param name="qubit">The index of the qubit to apply the T gate to.</param>
-    public void T(int qubit)
-    {
-        ApplyGate(QuantumGates.T, qubit);
-    }
+    public void T(int qubit) => ApplyGate(QuantumGates.T, qubit);
+
+    /// <summary>
+    /// Applies the T† gate (inverse of the T gate) to the specified qubit.
+    /// The T† gate reverses the π/4 phase shift applied by the T gate,
+    /// leaving |0⟩ unchanged and mapping |1⟩ to e^(-iπ/4)·|1⟩.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the T† gate to.</param>
+    public void Tdag(int qubit) => ApplyGate(QuantumGates.Tdag, qubit);
     
     /// <summary>
     /// Applies the CNOT (also called CX) gate (Controlled-NOT) to the specified qubits.
@@ -126,10 +123,8 @@ public class QuantumCircuit
     /// </summary>
     /// <param name="controlQubit">The index of the control qubit.</param>
     /// <param name="targetQubit">The index of the target qubit.</param>
-    public void CNOT(int controlQubit, int targetQubit)
-    {
+    public void CNOT(int controlQubit, int targetQubit) => 
         ApplyGate(QuantumGates.CNOT, [targetQubit, controlQubit]);
-    }
 
     /// <summary>
     /// Applies the CY gate (Controlled-Y) to the specified qubits.
@@ -137,10 +132,8 @@ public class QuantumCircuit
     /// </summary>
     /// <param name="controlQubit">The index of the control qubit.</param>
     /// <param name="targetQubit">The index of the target qubit.</param>
-    public void CY(int controlQubit, int targetQubit)
-    {
+    public void CY(int controlQubit, int targetQubit) =>
         ApplyGate(QuantumGates.CY, [targetQubit, controlQubit]);
-    }
     
     /// <summary>
     /// Applies the CZ gate (Controlled-Z) to the specified qubits.
@@ -148,10 +141,8 @@ public class QuantumCircuit
     /// </summary>
     /// <param name="controlQubit">The index of the control qubit.</param>
     /// <param name="targetQubit">The index of the target qubit.</param>
-    public void CZ(int controlQubit, int targetQubit)
-    {
+    public void CZ(int controlQubit, int targetQubit) =>
         ApplyGate(QuantumGates.CZ, [targetQubit, controlQubit]);
-    }
 
     /// <summary>
     /// Applies the CH gate (Controlled-Hadamard) to the specified qubits.
@@ -159,20 +150,16 @@ public class QuantumCircuit
     /// </summary>
     /// <param name="controlQubit">The index of the control qubit.</param>
     /// <param name="targetQubit">The index of the target qubit.</param>
-    public void CH(int controlQubit, int targetQubit)
-    {
+    public void CH(int controlQubit, int targetQubit) =>
         ApplyGate(QuantumGates.CH, [targetQubit, controlQubit]);
-    }
 
     /// <summary>
     /// Applies the SWAP gate to the specified qubits, exchanging their states.
     /// </summary>
     /// <param name="firstQubit">The index of the first qubit.</param>
     /// <param name="secondQubit">The index of the second qubit.</param>
-    public void SWAP(int firstQubit, int secondQubit)
-    {
+    public void SWAP(int firstQubit, int secondQubit) =>
         ApplyGate(QuantumGates.SWAP, [secondQubit, firstQubit]);
-    }
 
     /// <summary>
     /// Applies the Toffoli(CCX) gate (Controlled-Controlled-NOT) to the specified qubits.
@@ -181,10 +168,8 @@ public class QuantumCircuit
     /// <param name="firstControlQubit">The index of the first control qubit.</param>
     /// <param name="secondControlQubit">The index of the second control qubit.</param>
     /// <param name="targetQubit">The index of the target qubit to be flipped.</param>
-    public void Toffoli(int firstControlQubit, int secondControlQubit, int targetQubit)
-    {
+    public void Toffoli(int firstControlQubit, int secondControlQubit, int targetQubit) =>
         ApplyGate(QuantumGates.Toffoli, [targetQubit, firstControlQubit, secondControlQubit]);
-    }
 
     /// <summary>
     /// Applies the Fredkin gate (Controlled-SWAP) to the specified qubits.
@@ -193,10 +178,8 @@ public class QuantumCircuit
     /// <param name="controlQubit">The index of the control qubit.</param>
     /// <param name="firstTargetQubit">The index of the first target qubit to be swapped.</param>
     /// <param name="secondTargetQubit">The index of the second target qubit to be swapped.</param>
-    public void Fredkin(int controlQubit, int firstTargetQubit, int secondTargetQubit)
-    {
+    public void Fredkin(int controlQubit, int firstTargetQubit, int secondTargetQubit) =>
         ApplyGate(QuantumGates.Fredkin, [secondTargetQubit, firstTargetQubit, controlQubit]);
-    }
 
     /// <summary>
     /// Converts a quantum state vector represented as an array of complex numbers into a string representation.
