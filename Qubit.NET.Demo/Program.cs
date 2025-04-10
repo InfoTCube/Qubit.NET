@@ -1,4 +1,5 @@
 ﻿using Qubit.NET;
+using Qubit.NET.Gates;
 
 namespace Qubit.NET.Demo;
 
@@ -12,6 +13,8 @@ public static class Program
         qc.CNOT(0, 1);
 
         Console.WriteLine(qc.ToString());
+        
+        QuantumGates.Print(QuantumGates.H);
         
         Console.WriteLine(Simulator.Run(qc, 1000).GetStringResult());
     }
