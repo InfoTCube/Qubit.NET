@@ -10,6 +10,8 @@ public static class Program
 
         qc.H(0);
         qc.CNOT(0, 1);
+
+        Console.WriteLine(qc.ToString());
         
         Console.WriteLine(Simulator.Run(qc, 1000).GetStringResult());
     }

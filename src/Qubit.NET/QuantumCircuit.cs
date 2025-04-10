@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
 
@@ -194,6 +195,57 @@ public class QuantumCircuit
     public void Fredkin(int controlQubit, int firstTargetQubit, int secondTargetQubit)
     {
         ApplyGate(QuantumGates.Fredkin, [secondTargetQubit, firstTargetQubit, controlQubit]);
+    }
+
+    /// <summary>
+    /// Converts a quantum state vector represented as an array of complex numbers into a string representation.
+    /// The format of the string is: a |00⟩ + b |01⟩ + c |10⟩ + d |11⟩, where the coefficients are complex numbers.
+    /// </summary>
+    /// <returns>A string representation of the quantum state vector in the form: a |00⟩ + b |01⟩ + c |10⟩ + d |11⟩.</returns>
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < StateVector.Length; i++)
+        {
+            double realPart = StateVector[i].Real;
+            double imaginaryPart = StateVector[i].Imaginary;
+            
+            string amplitude = FormatComplex(realPart, imaginaryPart);
+            
+            if (string.IsNullOrEmpty(amplitude)) continue;
+
+            string binaryState = Convert.ToString(i, 2).PadLeft(QubitCount, '0');
+            
+            if (i > 0)
+            {
+                sb.Append(" + ");
+            }
+            sb.Append(amplitude + "|" + binaryState + ">");
+        }
+
+        return sb.ToString();
+    }
+    
+    /// <summary>
+    /// Formats a complex number as a string. If the imaginary part is zero, only the real part is included. 
+    /// If the real part is zero, only the imaginary part is included. Both parts are included if they are non-zero.
+    /// </summary>
+    /// <param name="real">The real part of the complex number.</param>
+    /// <param name="imaginary">The imaginary part of the complex number.</param>
+    /// <returns>A string representation of the complex number, in the form: "real + imaginary*i" or "real" or "imaginary*i".</returns>
+    private string FormatComplex(double real, double imaginary)
+    {
+        if (imaginary == 0 && real == 0)
+            return String.Empty;
+        
+        if (imaginary == 0)
+            return real.ToString();
+        
+        if (real == 0)
+            return $"{imaginary}i";
+        
+        return $"{real} + {imaginary}i";
     }
     
     /// <summary>
