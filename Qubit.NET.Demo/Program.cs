@@ -7,8 +7,10 @@ public static class Program
     public static void Main(string[] args)
     {
         QuantumCircuit qc = new QuantumCircuit(2);
-        qc.H(0);
 
+        qc.H(0);
+        qc.CNOT(0, 1);
+        
         Console.WriteLine(Simulator.Run(qc, 1000).GetStringResult());
     }
 }
