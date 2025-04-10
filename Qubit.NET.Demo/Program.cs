@@ -1,5 +1,6 @@
 ﻿using Qubit.NET.Gates;
 using Qubit.NET.Simulation;
+using Qubit.NET.Utilities;
 
 namespace Qubit.NET.Demo;
 
