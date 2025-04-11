@@ -21,6 +21,13 @@ public class QuantumCircuit
     /// State vector representing the current quantum state.
     /// </summary>
     public Complex[] StateVector { get; private set; }
+    
+    /// <summary>
+    /// Tracks whether each qubit has been modified (i.e., had a gate applied).
+    /// This is used to prevent initialization of qubits after they have been altered,
+    /// maintaining consistency with quantum circuit behavior.
+    /// </summary>
+    private readonly bool[] _isQubitModified;
 
     /// <summary>
     /// Initializes quantum circuit with specified number of qubits in 0 state.
@@ -34,6 +41,7 @@ public class QuantumCircuit
         QubitCount = qubitCount;
         StateVector = new Complex[1 << qubitCount];
         StateVector[0] = new Complex(1, 0);
+        _isQubitModified = new bool[qubitCount];
     }
 
     /// <summary>
@@ -46,6 +54,7 @@ public class QuantumCircuit
     {
         QubitCount = qc.QubitCount;
         StateVector = qc.StateVector;
+        _isQubitModified = qc._isQubitModified;
     }
 
     /// <summary>
@@ -63,6 +72,89 @@ public class QuantumCircuit
         StateVector = QuantumMath.CollapseToState(StateVector, result);
 
         return Convert.ToString(result, 2).PadLeft(QubitCount, '0');
+    }
+
+    /// <summary>
+    /// Initializes the specified qubit to a predefined basis state: |0⟩, |1⟩, |+⟩, or |−⟩.
+    /// This operation modifies the quantum state to reflect the chosen single-qubit state.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to initialize.</param>
+    /// <param name="state">The desired single-qubit state to initialize to.</param>
+    /// <exception cref="ArgumentException">Thrown when an unknown state is provided.</exception>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range.
+    /// </exception>
+    public void Initialize(int qubit, State state)
+    {
+        Complex alpha, beta;
+
+        switch (state)
+        {
+            case State.Zero:
+                alpha = Complex.One;
+                beta = Complex.Zero;
+                break;
+            case State.One:
+                alpha = Complex.Zero;
+                beta = Complex.One;
+                break;
+            case State.Plus:
+                alpha = beta = new Complex(1 / System.Math.Sqrt(2), 0);
+                break;
+            case State.Minus:
+                alpha = new Complex(1 / System.Math.Sqrt(2), 0);
+                beta = new Complex(-1 / System.Math.Sqrt(2), 0);
+                break;
+            default:
+                throw new ArgumentException("Unknown basis state.");
+        }
+
+        Initialize(qubit, alpha, beta);
+    }
+    
+    /// <summary>
+    /// Initializes the specified qubit to an arbitrary single-qubit state defined by amplitudes α and β.
+    /// This is done by transforming the existing quantum state vector accordingly.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to initialize.</param>
+    /// <param name="alpha">Amplitude for the |0⟩ component of the qubit.</param>
+    /// <param name="beta">Amplitude for the |1⟩ component of the qubit.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range.
+    /// </exception>
+    public void Initialize(int qubit, Complex alpha, Complex beta)
+    {
+        CheckQubit(qubit);
+        
+        if (_isQubitModified[qubit])
+            throw new InvalidOperationException($"Qubit {qubit} has already been modified and cannot be re-initialized.");
+
+        Complex[] newState = new Complex[StateVector.Length];
+
+        for (int i = 0; i < StateVector.Length; i++)
+        {
+            // Extract the current value of the target qubit
+            int bit = (i >> qubit) & 1;
+
+            // Clear the target qubit bit
+            int baseIndex = i & ~(1 << qubit);
+
+            // Apply transformation based on whether qubit is 0 or 1
+            if (bit == 0)
+            {
+                newState[baseIndex] += alpha * StateVector[i];
+                newState[baseIndex | (1 << qubit)] += beta * StateVector[i];
+            }
+            else
+            {
+                newState[baseIndex] += beta * StateVector[i];
+                newState[baseIndex | (1 << qubit)] += -alpha * StateVector[i]; // Optional: you can adjust phase if needed
+            }
+        }
+
+        _isQubitModified[qubit] = true;
+        
+        StateVector = newState;
     }
 
     /// <summary>
@@ -347,6 +439,8 @@ public class QuantumCircuit
     private void ApplyGate(Complex[,] matrix, int targetQubit)
     {
         StateVector = QuantumMath.ApplySingleQubitGate(StateVector, matrix, targetQubit);
+        
+        _isQubitModified[targetQubit] = true;
     }
 
     /// <summary>
@@ -362,6 +456,9 @@ public class QuantumCircuit
         }
         
         StateVector = QuantumMath.ApplyMultiQubitGate(StateVector, matrix, targetQubits);
+
+        foreach (var qubit in targetQubits)
+            _isQubitModified[qubit] = true;
     }
 
     /// <summary>

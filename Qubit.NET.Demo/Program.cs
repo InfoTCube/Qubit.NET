@@ -1,4 +1,5 @@
-﻿using Qubit.NET.Gates;
+﻿using System.Numerics;
+using Qubit.NET.Gates;
 using Qubit.NET.Simulation;
 using Qubit.NET.Utilities;
 
