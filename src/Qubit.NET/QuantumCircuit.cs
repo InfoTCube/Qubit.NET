@@ -133,13 +133,9 @@ public class QuantumCircuit
 
         for (int i = 0; i < StateVector.Length; i++)
         {
-            // Extract the current value of the target qubit
             int bit = (i >> qubit) & 1;
-
-            // Clear the target qubit bit
             int baseIndex = i & ~(1 << qubit);
-
-            // Apply transformation based on whether qubit is 0 or 1
+            
             if (bit == 0)
             {
                 newState[baseIndex] += alpha * StateVector[i];
@@ -148,7 +144,7 @@ public class QuantumCircuit
             else
             {
                 newState[baseIndex] += beta * StateVector[i];
-                newState[baseIndex | (1 << qubit)] += -alpha * StateVector[i]; // Optional: you can adjust phase if needed
+                newState[baseIndex | (1 << qubit)] += -alpha * StateVector[i];
             }
         }
 
@@ -455,6 +451,8 @@ public class QuantumCircuit
             throw new InvalidOperationException($"You cannot apply {targetQubits.Length} qubit gate to {QubitCount} qubit circuit.");    
         }
         
+        CheckIfDifferentQubits(targetQubits);
+        
         StateVector = QuantumMath.ApplyMultiQubitGate(StateVector, matrix, targetQubits);
 
         foreach (var qubit in targetQubits)
@@ -473,5 +471,23 @@ public class QuantumCircuit
     {
         if (qubit < 0 || qubit >= QubitCount)
             throw new QubitIndexOutOfRangeException($"Invalid index ({qubit}): qubit index must be between [0 and {QubitCount})");
+    }
+    
+    /// <summary>
+    /// Checks if all qubits in the provided array are distinct.
+    /// This method ensures that the user applies quantum gates to different qubits, 
+    /// and throws an exception if any qubit is repeated in the array.
+    /// </summary>
+    /// <param name="qubits">An array of qubits to apply quantum gate to.</param>
+    /// <exception cref="ArgumentException">Thrown when a duplicate qubit is found in the array, indicating that the gate would be applied to the same qubit at different positions.</exception>
+    private void CheckIfDifferentQubits(int[] qubits)
+    {
+        HashSet<int> seen = new HashSet<int>();
+    
+        foreach (int qubit in qubits)
+        {
+            if (!seen.Add(qubit))
+                throw new ArgumentException("Every gate argument must be a different Qubit");
+        }
     }
 }
