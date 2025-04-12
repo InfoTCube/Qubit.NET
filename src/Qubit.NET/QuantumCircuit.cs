@@ -32,11 +32,13 @@ public class QuantumCircuit
     /// <summary>
     /// Initializes quantum circuit with specified number of qubits in 0 state.
     /// </summary>
-    /// <param name="qubitCount">Number of qubits.</param>
+    /// <param name="qubitCount">Number of qubits. (0-100] qubits are supported.</param>
     public QuantumCircuit(int qubitCount)
     {
         if (qubitCount <= 0)
             throw new ArgumentException("Qubit count must be positive.");
+        if (qubitCount > 100)
+            throw new AggregateException("Qubit count can be at most 100.");
         
         QubitCount = qubitCount;
         StateVector = new Complex[1 << qubitCount];
