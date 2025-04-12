@@ -1,3 +1,5 @@
+using Qubit.NET.Gates;
+
 namespace Qubit.NET.Utilities;
 
 /// <summary>
@@ -24,5 +26,59 @@ internal static class Helpers
             return $"{imaginary}i";
         
         return $"{real} + {imaginary}i";
+    }
+
+    /// <summary>
+    /// Returns a string array representation of a quantum gate, where each element corresponds
+    /// to the symbol that should be displayed on a specific qubit line in a circuit diagram.
+    /// The representation includes control symbols (●), targets (e.g., X, H), and measurements (M),
+    /// and is ordered according to the gate's multi-qubit structure.
+    /// </summary>
+    /// <param name="gateType">The type of the quantum gate.</param>
+    /// <returns>
+    /// An array of strings representing the visual components of the gate
+    /// for use in a circuit drawing. Each string corresponds to one qubit line.
+    /// </returns>
+    internal static string[] GateTypeToCharRepresentation(GateType gateType)
+    {
+        return gateType switch
+        {
+            GateType.H => ["H"],
+            GateType.X => ["X"],
+            GateType.Y => ["Y"],
+            GateType.Z => ["Z"],
+            GateType.S => ["S"],
+            GateType.Sdag => ["S†"],
+            GateType.T => ["T"],
+            GateType.Tdag => ["T†"],
+            GateType.CNOT => ["\u25cf", "\u25cb"],
+            GateType.CY => ["\u25cf", "Y"],
+            GateType.CZ => ["\u25cf", "Z"],
+            GateType.CH => ["\u25cf", "H"],
+            GateType.SWAP => ["X", "X"],
+            GateType.Toffoli => ["\u25cf", "\u25cf", "\u25cb"],
+            GateType.Fredkin => ["\u25cf", "X", "X"],
+            GateType.Measure => ["M"],
+            _ => [" "]
+        };
+    }
+    
+    /// <summary>
+    /// Converts a quantum <see cref="State"/> to its corresponding character representation.
+    /// </summary>
+    /// <param name="state">The initial quantum state to convert.</param>
+    /// <returns>A character representing the specified quantum state:
+    /// '0' for Zero, '1' for One, '+' for Plus, '-' for Minus, and 'c' for Custom.</returns>
+    internal static char InitialStateToCharRepresentation(State state)
+    {
+        return state switch
+        {
+            State.One => '1',
+            State.Zero => '0',
+            State.Plus => '+',
+            State.Minus => '-',
+            State.Custom => 'c',
+            _ => ' '
+        };
     }
 }

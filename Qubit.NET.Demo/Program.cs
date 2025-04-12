@@ -20,6 +20,8 @@ public static class Program
         
         QuantumGates.Print(QuantumGates.H);
         
+        qc.Draw();
+        
         Console.WriteLine(Simulator.Run(qc, 1000)[0].GetStringResult());
     }
 }

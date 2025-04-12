@@ -28,7 +28,7 @@ public static class Simulator
 
         foreach (var init in qc.Initializations)
         {
-            stateVector = QuantumMath.InitializeState(stateVector, init.Item1, init.Item2, init.Item3);
+            stateVector = QuantumMath.InitializeState(stateVector, init.QubitIndex, init.Alpha, init.Beta);
         }
 
         GateType currentGateType = qc.Gates.First().GateType;

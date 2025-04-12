@@ -28,10 +28,9 @@ public class QuantumCircuit
     internal IList<Gate> Gates = new List<Gate>();
     
     /// <summary>
-    /// A list of qubit initializations, each represented as a tuple:
-    /// (qubit index, amplitude of |0⟩, amplitude of |1⟩).
+    /// A list of qubit initializations, each represented as a InitialState class.
     /// </summary>
-    internal IList<Tuple<int, Complex, Complex>> Initializations = new List<Tuple<int, Complex, Complex>>();
+    internal IList<InitialState> Initializations = new List<InitialState>();
     
     /// <summary>
     /// Tracks whether each qubit has been modified (i.e., had a gate applied).
@@ -129,7 +128,7 @@ public class QuantumCircuit
                 throw new ArgumentException("Unknown basis state.");
         }
 
-        Initialize(qubit, alpha, beta);
+        Initialize(qubit, alpha, beta, state);
     }
     
     /// <summary>
@@ -138,10 +137,11 @@ public class QuantumCircuit
     /// <param name="qubit">The index of the qubit to initialize.</param>
     /// <param name="alpha">Amplitude for the |0⟩ component of the qubit.</param>
     /// <param name="beta">Amplitude for the |1⟩ component of the qubit.</param>
+    /// /// <param name="state">Optional description of the state.</param>
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void Initialize(int qubit, Complex alpha, Complex beta)
+    public void Initialize(int qubit, Complex alpha, Complex beta, State state = State.Custom)
     {
         CheckQubit(qubit);
         
@@ -151,7 +151,16 @@ public class QuantumCircuit
         StateVector = QuantumMath.InitializeState(StateVector, qubit, alpha, beta);
         
         _isQubitModified[qubit] = true;
-        Initializations.Add(new Tuple<int, Complex, Complex>(qubit, alpha, beta));
+
+        InitialState initial = new InitialState()
+        {
+            QubitIndex = qubit,
+            Alpha = alpha,
+            Beta = beta,
+            BasicState = state
+        };
+        
+        Initializations.Add(initial);
     }
 
     /// <summary>
@@ -548,6 +557,8 @@ public class QuantumCircuit
     {
         StringBuilder sb = new StringBuilder();
 
+        bool any = false;
+        
         for (int i = 0; i < StateVector.Length; i++)
         {
             double realPart = StateVector[i].Real;
@@ -559,14 +570,32 @@ public class QuantumCircuit
 
             string binaryState = Convert.ToString(i, 2).PadLeft(QubitCount, '0');
             
-            if (i > 0)
-            {
-                sb.Append(" + ");
-            }
+            if (any) sb.Append(" + ");
+            if(amplitude == "1") amplitude = string.Empty;
+            
             sb.Append(amplitude + "|" + binaryState + ">");
+            any = true;
         }
 
         return sb.ToString();
+    }
+
+    public void Draw()
+    {
+        ConsoleColor defaultColor = Console.ForegroundColor;
+        
+        for (int i = QubitCount-1; i >= 0; i--)
+        {
+            InitialState? initialState = Initializations.FirstOrDefault(init => init.QubitIndex == i);
+            char initState = initialState == null ? '0' : Helpers.InitialStateToCharRepresentation(initialState.BasicState);
+            
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write($"q{i} ({initState}): ");
+            Console.ForegroundColor = defaultColor;
+            Console.WriteLine(new string('\u2500', 50));
+        }
+        
+        Console.ForegroundColor = defaultColor;
     }
     
     /// <summary>

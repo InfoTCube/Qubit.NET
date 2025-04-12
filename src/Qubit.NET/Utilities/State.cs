@@ -5,5 +5,6 @@ public enum State
     Zero,
     One,
     Plus,
-    Minus
+    Minus,
+    Custom
 }
