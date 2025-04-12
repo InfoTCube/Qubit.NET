@@ -16,9 +16,11 @@ public static class Program
 
         Console.WriteLine(qc.ToString());
         
+        qc.Measure();
+        
         QuantumGates.Print(QuantumGates.H);
         
-        Console.WriteLine(Simulator.Run(qc, 1000).GetStringResult());
+        Console.WriteLine(Simulator.Run(qc, 1000)[0].GetStringResult());
     }
 }
 

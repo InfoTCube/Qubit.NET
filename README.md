@@ -90,7 +90,7 @@ qc.H(0);
 qc.X(1);
 ```
 
-#### ✅ Two-Qubit Gate
+#### ✅ Two-Qubit Gates
 
 | Method           | Description                 |
 |------------------|-----------------------------|
@@ -104,7 +104,7 @@ qc.X(1);
 qc.CNOT(0, 1);
 ```
 
-#### ✅ Three-Qubit Gate
+#### ✅ Three-Qubit Gates
 
 | Method           | Description               |
 |------------------|---------------------------|
@@ -125,6 +125,7 @@ Work in progess...
 ### 📏 Measurement
 
 Measure the entire quantum system and get a classical bitstring (e.g. `"00"`, `"11"`).
+You can get one result using basic vector state real-time simulator.
 
 ```csharp
 string result = qc.Measure();
@@ -136,7 +137,7 @@ The measurement collapses the quantum state probabilistically based on the ampli
 
 ### ⚙️ Simulation
 
-The `Simulator` class provides functionality to simulate quantum circuits and measure the results. It allows you to run a quantum circuit multiple times and analyze the measurement outcomes.
+The `Simulator` class provides functionality to simulate quantum circuits and measure the results. It allows you to run a quantum circuit multiple times and analyze the measurement outcomes. It returns an array of measurments for each `qc.Measure()`
 
 #### Example:
 
@@ -144,7 +145,9 @@ The `Simulator` class provides functionality to simulate quantum circuits and me
 QuantumCircuit qc = new QuantumCircuit(2);
 qc.H(0);
 qc.CNOT(0, 1);
-string results = Simulator.Run(qc, 1000).GetStringResult();
+qc.Measure();
+
+string results = Simulator.Run(qc, 1000)[0].GetStringResult();
 Console.WriteLine(results);
 ```
 

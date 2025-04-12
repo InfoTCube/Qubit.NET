@@ -1,4 +1,7 @@
+using System.Numerics;
 using System.Text;
+using Qubit.NET.Gates;
+using Qubit.NET.Math;
 
 namespace Qubit.NET.Simulation;
 
@@ -8,27 +11,70 @@ namespace Qubit.NET.Simulation;
 public static class Simulator
 {
     /// <summary>
-    /// Simulates a quantum circuit multiple times and records the measurement results.
+    /// Simulates the quantum circuit by applying gates up to the first measurement,
+    /// and then continues the simulation for a specified number of shots,
+    /// recording the results of measurements for each run.
     /// </summary>
     /// <param name="qc">The quantum circuit to simulate.</param>
-    /// <param name="shots">The number of times the circuit should be run (shots).</param>
+    /// <param name="shots">The number of times the simulation should be run. Default is 1.</param>
     /// <returns>
-    /// An integer array where each index represents a possible measurement outcome, and
-    /// the value at that index is the number of times that outcome was observed.
+    /// A list of integer arrays representing measurement results for each shot.
+    /// Each array contains counts of observed outcomes.
     /// </returns>
-    public static int[] Run(QuantumCircuit qc, int shots)
+    public static IList<int[]> Run(QuantumCircuit qc, int shots = 1)
     {
-        int[] result = new int[qc.QubitCount*qc.QubitCount];
+        Complex[] stateVector = new Complex[1 << qc.QubitCount];
+        stateVector[0] = new Complex(1, 0);
+
+        foreach (var init in qc.Initializations)
+        {
+            stateVector = QuantumMath.InitializeState(stateVector, init.Item1, init.Item2, init.Item3);
+        }
+
+        GateType currentGateType = qc.Gates.First().GateType;
+
+        while (currentGateType != GateType.Measure && qc.Gates.Count != 0)
+        {
+            Gate currentGate = qc.Gates.First();
+            
+            stateVector = ApplayGate(stateVector, currentGate, currentGateType);
+
+            qc.Gates.RemoveAt(0);
+            
+            currentGateType = qc.Gates.Count > 0 ? qc.Gates.First().GateType : currentGateType;
+        }
+        
+        IList<int[]> results = new List<int[]>();
         
         for (int i = 0; i < shots; i++)
         {
-            QuantumCircuit quantumCircuit = new QuantumCircuit(qc);
-            int num = Convert.ToInt32(quantumCircuit.Measure(), 2);
+            Complex[] modStateVector = (Complex[])stateVector.Clone();
 
-            result[num]++;
+            int measurmentNumber = 0;
+            
+            foreach (var gate in qc.Gates)
+            {
+                if (gate.GateType == GateType.Measure)
+                {
+                    int num = MeasureState(modStateVector, qc.QubitCount);
+
+                    if (measurmentNumber + 1 > results.Count)
+                    {
+                        results.Add(new int[qc.QubitCount*qc.QubitCount]);
+                    }
+                    
+                    results[measurmentNumber][num]++;
+
+                    measurmentNumber++;
+                }
+                else
+                {
+                    modStateVector = ApplayGate(modStateVector, gate, gate.GateType);
+                }
+            }
         }
         
-        return result;
+        return results;
     }
 
     /// <summary>
@@ -59,5 +105,59 @@ public static class Simulator
         sb.Append("}");
         
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Applies a quantum gate to the given state vector, modifying it according to the specified gate type.
+    /// Handles single-qubit and multi-qubit gates including controlled gates.
+    /// </summary>
+    /// <param name="stateVector">The current quantum state vector.</param>
+    /// <param name="currentGate">The gate to apply.</param>
+    /// <param name="gateType">The type of gate being applied.</param>
+    private static Complex[] ApplayGate(Complex[] stateVector, Gate currentGate, GateType gateType)
+    {
+        switch (gateType)
+        {
+            case GateType.H or GateType.X or GateType.Y or GateType.Z or GateType.S or GateType.Sdag or GateType.T or GateType.Tdag:
+                stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
+                break;
+            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH:
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix, 
+                    [currentGate.TargetQubits.First(), currentGate.ControlQubits.First()]);
+                break;
+            case GateType.SWAP:
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
+                    currentGate.TargetQubits.ToArray());
+                break;
+            case GateType.Toffoli:
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
+                    [currentGate.TargetQubits.First(), currentGate.ControlQubits[0], currentGate.ControlQubits[1]]);
+                break;
+            case GateType.Fredkin:
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
+                    [currentGate.TargetQubits[1], currentGate.TargetQubits[0], currentGate.ControlQubits.First()]);
+                break;
+        }
+
+        return stateVector;
+    }
+    
+    /// <summary>
+    /// Measures the quantum register, collapsing the state to one of the basis states.
+    /// The measurement is a probabilistic process where the state collapses to a classical bit (0 or 1) with respective probabilities.
+    /// The method updates the quantum state vector after the measurement, reducing the state to the measured result.
+    /// </summary>
+    /// <param name="stateVector">The current state vector.</param>
+    /// <param name="qubitCount">The number of qubits.</param>
+    /// <returns>The index of the measured basis state, representing the outcome of the measurement.</returns>
+    private static int MeasureState(Complex[] stateVector, int qubitCount)
+    {
+        // Perform a measurement by sampling from the current state vector probabilities
+        var result = QuantumMath.SampleMeasurement(stateVector);
+    
+        // Collapse the quantum state to the measured state (collapse the superposition)
+        stateVector = QuantumMath.CollapseToState(stateVector, result);
+
+        return result;
     }
 }

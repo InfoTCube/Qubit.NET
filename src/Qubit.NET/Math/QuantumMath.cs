@@ -85,6 +85,38 @@ internal static class QuantumMath
 
         return newState;
     }
+
+    /// <summary>
+    /// Initializes the specified qubit to an arbitrary single-qubit state defined by amplitudes α and β.
+    /// This is done by transforming the existing quantum state vector accordingly.
+    /// </summary>
+    /// <param name="state">The current full quantum state vector.</param>
+    /// <param name="targetQubit">The index of the qubit to initialize.</param>
+    /// <param name="alpha">Amplitude for the |0⟩ component of the qubit.</param>
+    /// <param name="beta">Amplitude for the |1⟩ component of the qubit.</param>
+    public static Complex[] InitializeState(Complex[] state, int targetQubit, Complex alpha, Complex beta)
+    {
+        Complex[] newState = new Complex[state.Length];
+
+        for (int i = 0; i < state.Length; i++)
+        {
+            int bit = (i >> targetQubit) & 1;
+            int baseIndex = i & ~(1 << targetQubit);
+            
+            if (bit == 0)
+            {
+                newState[baseIndex] += alpha * state[i];
+                newState[baseIndex | (1 << targetQubit)] += beta * state[i];
+            }
+            else
+            {
+                newState[baseIndex] += beta * state[i];
+                newState[baseIndex | (1 << targetQubit)] += -alpha * state[i];
+            }
+        }
+
+        return newState;
+    }
     
     /// <summary>
     /// Samples a measurement from the quantum state vector for a multi-qubit system.

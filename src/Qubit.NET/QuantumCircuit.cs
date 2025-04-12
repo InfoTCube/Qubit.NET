@@ -21,6 +21,17 @@ public class QuantumCircuit
     /// State vector representing the current quantum state.
     /// </summary>
     public Complex[] StateVector { get; private set; }
+
+    /// <summary>
+    /// A list of quantum gates applied in the circuit.
+    /// </summary>
+    internal IList<Gate> Gates = new List<Gate>();
+    
+    /// <summary>
+    /// A list of qubit initializations, each represented as a tuple:
+    /// (qubit index, amplitude of |0⟩, amplitude of |1⟩).
+    /// </summary>
+    internal IList<Tuple<int, Complex, Complex>> Initializations = new List<Tuple<int, Complex, Complex>>();
     
     /// <summary>
     /// Tracks whether each qubit has been modified (i.e., had a gate applied).
@@ -73,6 +84,13 @@ public class QuantumCircuit
         // Collapse the quantum state to the measured state (collapse the superposition)
         StateVector = QuantumMath.CollapseToState(StateVector, result);
 
+        Gate measure = new Gate()
+        {
+            GateType = GateType.Measure
+        };
+        
+        Gates.Add(measure);
+        
         return Convert.ToString(result, 2).PadLeft(QubitCount, '0');
     }
 
@@ -116,7 +134,6 @@ public class QuantumCircuit
     
     /// <summary>
     /// Initializes the specified qubit to an arbitrary single-qubit state defined by amplitudes α and β.
-    /// This is done by transforming the existing quantum state vector accordingly.
     /// </summary>
     /// <param name="qubit">The index of the qubit to initialize.</param>
     /// <param name="alpha">Amplitude for the |0⟩ component of the qubit.</param>
@@ -131,28 +148,10 @@ public class QuantumCircuit
         if (_isQubitModified[qubit])
             throw new InvalidOperationException($"Qubit {qubit} has already been modified and cannot be re-initialized.");
 
-        Complex[] newState = new Complex[StateVector.Length];
-
-        for (int i = 0; i < StateVector.Length; i++)
-        {
-            int bit = (i >> qubit) & 1;
-            int baseIndex = i & ~(1 << qubit);
-            
-            if (bit == 0)
-            {
-                newState[baseIndex] += alpha * StateVector[i];
-                newState[baseIndex | (1 << qubit)] += beta * StateVector[i];
-            }
-            else
-            {
-                newState[baseIndex] += beta * StateVector[i];
-                newState[baseIndex | (1 << qubit)] += -alpha * StateVector[i];
-            }
-        }
-
-        _isQubitModified[qubit] = true;
+        StateVector = QuantumMath.InitializeState(StateVector, qubit, alpha, beta);
         
-        StateVector = newState;
+        _isQubitModified[qubit] = true;
+        Initializations.Add(new Tuple<int, Complex, Complex>(qubit, alpha, beta));
     }
 
     /// <summary>
@@ -166,6 +165,15 @@ public class QuantumCircuit
     public void H(int qubit)
     {
         CheckQubit(qubit);
+        
+        Gate hGate = new Gate
+        {
+            GateType = GateType.H,
+            Matrix = QuantumGates.H,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(hGate);
         
         ApplyGate(QuantumGates.H, qubit);
     }
@@ -182,6 +190,15 @@ public class QuantumCircuit
     {
         CheckQubit(qubit);
         
+        Gate xGate = new Gate
+        {
+            GateType = GateType.X,
+            Matrix = QuantumGates.X,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(xGate);
+        
         ApplyGate(QuantumGates.X, qubit);
     }
 
@@ -196,6 +213,15 @@ public class QuantumCircuit
     public void Y(int qubit)
     {
         CheckQubit(qubit);
+        
+        Gate yGate = new Gate
+        {
+            GateType = GateType.Y,
+            Matrix = QuantumGates.Y,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(yGate);
         
         ApplyGate(QuantumGates.Y, qubit);
     }
@@ -212,6 +238,15 @@ public class QuantumCircuit
     {
         CheckQubit(qubit);
         
+        Gate zGate = new Gate
+        {
+            GateType = GateType.Z,
+            Matrix = QuantumGates.Z,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(zGate);
+        
         ApplyGate(QuantumGates.Z, qubit);
     }
 
@@ -226,6 +261,15 @@ public class QuantumCircuit
     public void S(int qubit)
     {
         CheckQubit(qubit);
+        
+        Gate sGate = new Gate
+        {
+            GateType = GateType.S,
+            Matrix = QuantumGates.S,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(sGate);
         
         ApplyGate(QuantumGates.S, qubit);
     }
@@ -243,6 +287,15 @@ public class QuantumCircuit
     {
         CheckQubit(qubit);
         
+        Gate sDagGate = new Gate
+        {
+            GateType = GateType.Sdag,
+            Matrix = QuantumGates.Sdag,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(sDagGate);
+        
         ApplyGate(QuantumGates.Sdag, qubit);
     }
 
@@ -257,6 +310,15 @@ public class QuantumCircuit
     public void T(int qubit)
     {
         CheckQubit(qubit);
+        
+        Gate tGate = new Gate
+        {
+            GateType = GateType.T,
+            Matrix = QuantumGates.T,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(tGate);
         
         ApplyGate(QuantumGates.T, qubit);
     }
@@ -273,6 +335,15 @@ public class QuantumCircuit
     public void Tdag(int qubit)
     {
         CheckQubit(qubit);
+        
+        Gate tDagGate = new Gate
+        {
+            GateType = GateType.Tdag,
+            Matrix = QuantumGates.Tdag,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(tDagGate);
         
         ApplyGate(QuantumGates.Tdag, qubit);
     }
@@ -291,6 +362,16 @@ public class QuantumCircuit
         CheckQubit(controlQubit);
         CheckQubit(targetQubit);
         
+        Gate cnotGate = new Gate
+        {
+            GateType = GateType.CNOT,
+            Matrix = QuantumGates.CNOT,
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(cnotGate);
+        
         ApplyGate(QuantumGates.CNOT, [targetQubit, controlQubit]);
     }
 
@@ -307,6 +388,16 @@ public class QuantumCircuit
     {
         CheckQubit(controlQubit);
         CheckQubit(targetQubit);
+        
+        Gate cyGate = new Gate
+        {
+            GateType = GateType.CY,
+            Matrix = QuantumGates.CY,
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(cyGate);
         
         ApplyGate(QuantumGates.CY, [targetQubit, controlQubit]);
     }
@@ -325,6 +416,16 @@ public class QuantumCircuit
         CheckQubit(controlQubit);
         CheckQubit(targetQubit);
         
+        Gate czGate = new Gate
+        {
+            GateType = GateType.CZ,
+            Matrix = QuantumGates.CZ,
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(czGate);
+        
         ApplyGate(QuantumGates.CZ, [targetQubit, controlQubit]);
     }
 
@@ -342,6 +443,16 @@ public class QuantumCircuit
         CheckQubit(controlQubit);
         CheckQubit(targetQubit);
         
+        Gate chGate = new Gate
+        {
+            GateType = GateType.CH,
+            Matrix = QuantumGates.CH,
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(chGate);
+        
         ApplyGate(QuantumGates.CH, [targetQubit, controlQubit]);
     }
 
@@ -357,6 +468,15 @@ public class QuantumCircuit
     {
         CheckQubit(firstQubit);
         CheckQubit(secondQubit);
+        
+        Gate swapGate = new Gate
+        {
+            GateType = GateType.SWAP,
+            Matrix = QuantumGates.SWAP,
+            TargetQubits = [secondQubit, firstQubit],
+        };
+        
+        Gates.Add(swapGate);
         
         ApplyGate(QuantumGates.SWAP, [secondQubit, firstQubit]);
     }
@@ -377,6 +497,16 @@ public class QuantumCircuit
         CheckQubit(secondControlQubit);
         CheckQubit(targetQubit);
         
+        Gate toffoliGate = new Gate
+        {
+            GateType = GateType.Toffoli,
+            Matrix = QuantumGates.Toffoli,
+            TargetQubits = [targetQubit],
+            ControlQubits = [secondControlQubit, firstControlQubit]
+        };
+        
+        Gates.Add(toffoliGate);
+        
         ApplyGate(QuantumGates.Toffoli, [targetQubit, firstControlQubit, secondControlQubit]);
     }
 
@@ -395,6 +525,16 @@ public class QuantumCircuit
         CheckQubit(controlQubit);
         CheckQubit(firstTargetQubit);
         CheckQubit(secondTargetQubit);
+        
+        Gate fredkinGate = new Gate
+        {
+            GateType = GateType.Fredkin,
+            Matrix = QuantumGates.Fredkin,
+            TargetQubits = [secondTargetQubit, firstTargetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(fredkinGate);
         
         ApplyGate(QuantumGates.Fredkin, [secondTargetQubit, firstTargetQubit, controlQubit]);
     }
