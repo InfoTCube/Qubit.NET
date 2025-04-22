@@ -2,7 +2,7 @@
 
 # 🧠 C# Quantum Computing Simulation Library
 
-**Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It allows users to simulate quantum circuits up to 100 qubits, initialize qubits, apply common quantum gates, and measure results — all using a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
+**Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It allows users to simulate quantum circuits up to 30 qubits, initialize qubits, apply common quantum gates, and measure results — all using a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
 
 ---
 
@@ -14,8 +14,8 @@
 Clone or download the repository:
 
 ```bash
-git clone https://github.com/your-username/QuantumNet.git
-cd QuantumNet
+git clone https://github.com/InfoTCube/Qubit.Net.git
+cd Qubit.NET
 ```
 
 Add the project to your solution or include the `.cs` files (`QuantumCircuit.cs`, `QuantumGates.cs`, etc.) in your C# project.
@@ -25,7 +25,7 @@ Add the project to your solution or include the `.cs` files (`QuantumCircuit.cs`
 ## 🚀 Quick Start
 
 ```csharp
-using QuantumNet;
+using Qubit.Net;
 
 //qubits are created in 0 state
 var qc = new QuantumCircuit(2);

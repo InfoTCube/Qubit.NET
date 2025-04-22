@@ -23,6 +23,8 @@ public static class Simulator
     /// </returns>
     public static IList<int[]> Run(QuantumCircuit qc, int shots = 1)
     {
+        if(qc.Gates.All(g => g.GateType != GateType.Measure)) return new List<int[]>();
+        
         Complex[] stateVector = new Complex[1 << qc.QubitCount];
         stateVector[0] = new Complex(1, 0);
 
@@ -60,7 +62,7 @@ public static class Simulator
 
                     if (measurmentNumber + 1 > results.Count)
                     {
-                        results.Add(new int[qc.QubitCount*qc.QubitCount]);
+                        results.Add(new int[1L << qc.QubitCount]);
                     }
                     
                     results[measurmentNumber][num]++;

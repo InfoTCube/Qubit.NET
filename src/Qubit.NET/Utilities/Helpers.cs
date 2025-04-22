@@ -51,13 +51,13 @@ internal static class Helpers
             GateType.Sdag => ["S†"],
             GateType.T => ["T"],
             GateType.Tdag => ["T†"],
-            GateType.CNOT => ["\u25cf", "\u25cb"],
-            GateType.CY => ["\u25cf", "Y"],
-            GateType.CZ => ["\u25cf", "Z"],
-            GateType.CH => ["\u25cf", "H"],
+            GateType.CNOT => ["@", "+"],
+            GateType.CY => ["@", "Y"],
+            GateType.CZ => ["@", "Z"],
+            GateType.CH => ["@", "H"],
             GateType.SWAP => ["X", "X"],
-            GateType.Toffoli => ["\u25cf", "\u25cf", "\u25cb"],
-            GateType.Fredkin => ["\u25cf", "X", "X"],
+            GateType.Toffoli => ["@", "+", "+"],
+            GateType.Fredkin => ["@", "X", "X"],
             GateType.Measure => ["M"],
             _ => [" "]
         };
@@ -68,7 +68,7 @@ internal static class Helpers
     /// </summary>
     /// <param name="state">The initial quantum state to convert.</param>
     /// <returns>A character representing the specified quantum state:
-    /// '0' for Zero, '1' for One, '+' for Plus, '-' for Minus, and 'c' for Custom.</returns>
+    /// '0' for Zero, '1' for One, '+' for Plus, '-' for Minus, and 'P'(psi) for Custom.</returns>
     internal static char InitialStateToCharRepresentation(State state)
     {
         return state switch
@@ -77,7 +77,7 @@ internal static class Helpers
             State.Zero => '0',
             State.Plus => '+',
             State.Minus => '-',
-            State.Custom => 'c',
+            State.Custom => 'P',
             _ => ' '
         };
     }

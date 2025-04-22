@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System.Collections;
+using System.Collections.ObjectModel;
+using System.Numerics;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
@@ -42,13 +44,13 @@ public class QuantumCircuit
     /// <summary>
     /// Initializes quantum circuit with specified number of qubits in 0 state.
     /// </summary>
-    /// <param name="qubitCount">Number of qubits. (0-100] qubits are supported.</param>
+    /// <param name="qubitCount">Number of qubits. (0-30] qubits are supported.</param>
     public QuantumCircuit(int qubitCount)
     {
         if (qubitCount <= 0)
             throw new ArgumentException("Qubit count must be positive.");
-        if (qubitCount > 100)
-            throw new AggregateException("Qubit count can be at most 100.");
+        if (qubitCount > 30)
+            throw new AggregateException("Qubit count can be at most 30.");
         
         QubitCount = qubitCount;
         StateVector = new Complex[1 << qubitCount];
@@ -578,24 +580,6 @@ public class QuantumCircuit
         }
 
         return sb.ToString();
-    }
-
-    public void Draw()
-    {
-        ConsoleColor defaultColor = Console.ForegroundColor;
-        
-        for (int i = QubitCount-1; i >= 0; i--)
-        {
-            InitialState? initialState = Initializations.FirstOrDefault(init => init.QubitIndex == i);
-            char initState = initialState == null ? '0' : Helpers.InitialStateToCharRepresentation(initialState.BasicState);
-            
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"q{i} ({initState}): ");
-            Console.ForegroundColor = defaultColor;
-            Console.WriteLine(new string('\u2500', 50));
-        }
-        
-        Console.ForegroundColor = defaultColor;
     }
     
     /// <summary>
