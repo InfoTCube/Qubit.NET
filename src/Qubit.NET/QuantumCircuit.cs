@@ -68,6 +68,8 @@ public class QuantumCircuit
     {
         QubitCount = qc.QubitCount;
         StateVector = qc.StateVector;
+        Gates = qc.Gates;
+        Initializations = qc.Initializations;
         _isQubitModified = qc._isQubitModified;
     }
 
@@ -358,7 +360,85 @@ public class QuantumCircuit
         
         ApplyGate(QuantumGates.Tdag, qubit);
     }
+    
+    /// <summary>
+    /// Applies the Rx gate to the specified qubit.
+    /// The Rx gate rotates the state of the target qubit around the x-axis of the Bloch sphere by the given angle θ.
+    /// The matrix representation of the Rx gate is used to modify the qubit's state accordingly.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the Rx gate to.</param>
+    /// <param name="theta">The angle (in radians) by which to rotate the qubit's state around the x-axis.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
+    /// </exception>
+    public void Rx(int qubit, double theta)
+    {
+        CheckQubit(qubit);
+        
+        Gate rxGate = new Gate
+        {
+            GateType = GateType.Rx,
+            Matrix = QuantumGates.Rx(theta),
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(rxGate);
+        
+        ApplyGate(QuantumGates.Rx(theta), qubit);
+    }
+    
+    /// <summary>
+    /// Applies the Ry gate to the specified qubit.
+    /// The Ry gate rotates the state of the target qubit around the y-axis of the Bloch sphere by the given angle θ.
+    /// The matrix representation of the Ry gate is used to modify the qubit's state accordingly.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the Ry gate to.</param>
+    /// <param name="theta">The angle (in radians) by which to rotate the qubit's state around the y-axis.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
+    /// </exception>
+    public void Ry(int qubit, double theta)
+    {
+        CheckQubit(qubit);
+        
+        Gate ryGate = new Gate
+        {
+            GateType = GateType.Ry,
+            Matrix = QuantumGates.Ry(theta),
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(ryGate);
+        
+        ApplyGate(QuantumGates.Ry(theta), qubit);
+    }
 
+    /// <summary>
+    /// Applies the Rz gate to the specified qubit.
+    /// The Rz gate rotates the state of the target qubit around the z-axis of the Bloch sphere by the given angle θ.
+    /// The matrix representation of the Rz gate is used to modify the qubit's state accordingly.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the Rz gate to.</param>
+    /// <param name="theta">The angle (in radians) by which to rotate the qubit's state around the z-axis.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
+    /// </exception>
+    public void Rz(int qubit, double theta)
+    {
+        CheckQubit(qubit);
+        
+        Gate rzGate = new Gate
+        {
+            GateType = GateType.Rz,
+            Matrix = QuantumGates.Rz(theta),
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(rzGate);
+        
+        ApplyGate(QuantumGates.Rz(theta), qubit);
+    }
+    
     /// <summary>
     /// Applies the CNOT (also called CX) gate (Controlled-NOT) to the specified qubits.
     /// The CNOT gate flips the target qubit if the control qubit is in state |1>.

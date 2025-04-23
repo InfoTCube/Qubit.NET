@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
+using Qubit.NET.Utilities;
 
 namespace Qubit.NET.Simulation;
 
@@ -58,7 +59,7 @@ public static class Simulator
             {
                 if (gate.GateType == GateType.Measure)
                 {
-                    int num = MeasureState(modStateVector, qc.QubitCount);
+                    int num = MeasureState(modStateVector);
 
                     if (measurmentNumber + 1 > results.Count)
                     {
@@ -87,7 +88,7 @@ public static class Simulator
     /// A string formatted as a dictionary, where keys are binary representations of measurement outcomes,
     /// and values are the counts of how often each outcome occurred.
     /// </returns>
-    public static string GetStringResult(this int[] result)
+    public static string GetStringResult(this int[] result, int numQubits)
     {
         StringBuilder sb = new StringBuilder();
         sb.Append("{");
@@ -97,7 +98,7 @@ public static class Simulator
                 continue;
             
             sb.Append("'");
-            sb.Append(Convert.ToString(i, 2).PadLeft((int)System.Math.Sqrt(result.Length), '0'));
+            sb.Append(Convert.ToString(i, 2).PadLeft(numQubits, '0'));
             sb.Append("': ");
             sb.Append(result[i].ToString());
             sb.Append(", ");
@@ -120,7 +121,8 @@ public static class Simulator
     {
         switch (gateType)
         {
-            case GateType.H or GateType.X or GateType.Y or GateType.Z or GateType.S or GateType.Sdag or GateType.T or GateType.Tdag:
+            case GateType.H or GateType.X or GateType.Y or GateType.Z or GateType.S or GateType.Sdag 
+                or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz:
                 stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
                 break;
             case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH:
@@ -150,9 +152,8 @@ public static class Simulator
     /// The method updates the quantum state vector after the measurement, reducing the state to the measured result.
     /// </summary>
     /// <param name="stateVector">The current state vector.</param>
-    /// <param name="qubitCount">The number of qubits.</param>
     /// <returns>The index of the measured basis state, representing the outcome of the measurement.</returns>
-    private static int MeasureState(Complex[] stateVector, int qubitCount)
+    private static int MeasureState(Complex[] stateVector)
     {
         // Perform a measurement by sampling from the current state vector probabilities
         var result = QuantumMath.SampleMeasurement(stateVector);

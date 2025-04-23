@@ -61,7 +61,19 @@ public static class QuantumGates
         { 0, Complex.Conjugate(TElement) }
     };
 
-    public static Complex[,] RX(double theta)
+    public static Complex[,] Rx(double theta)
+    {
+        Complex cosTheta = Complex.Cos(theta / 2);
+        Complex sinTheta = Complex.Sin(theta / 2);
+        
+        return new Complex[,]
+        {
+            { cosTheta, -Complex.ImaginaryOne * sinTheta },
+            { -Complex.ImaginaryOne * sinTheta, cosTheta }
+        };
+    }
+
+    public static Complex[,] Ry(double theta)
     {
         Complex cosTheta = Complex.Cos(theta / 2);
         Complex sinTheta = Complex.Sin(theta / 2);
@@ -73,19 +85,7 @@ public static class QuantumGates
         };
     }
 
-    public static Complex[,] RY(double theta)
-    {
-        Complex cosTheta = Complex.Cos(theta / 2);
-        Complex sinTheta = Complex.Sin(theta / 2);
-        
-        return new Complex[,]
-        {
-            { cosTheta, -sinTheta },
-            { sinTheta, cosTheta }
-        };
-    }
-
-    public static Complex[,] RZ(double theta)
+    public static Complex[,] Rz(double theta)
     {
         Complex expNeg = Complex.Exp(-Complex.ImaginaryOne * (theta / 2));
         Complex expPos = Complex.Exp(Complex.ImaginaryOne * (theta / 2));

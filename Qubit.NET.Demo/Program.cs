@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Qubit.NET.Examples;
 using Qubit.NET.Gates;
 using Qubit.NET.Simulation;
 using Qubit.NET.Utilities;
@@ -22,7 +23,7 @@ public static class Program
         
         qc.Draw();
         
-        Console.WriteLine(Simulator.Run(qc, 1000)[0].GetStringResult());
+        Console.WriteLine(Simulator.Run(qc, 1000)[0].GetStringResult(qc.QubitCount));
     }
 }
 

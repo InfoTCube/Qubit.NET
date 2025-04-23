@@ -36,6 +36,9 @@ qc.H(0);
 // Apply CNOT (qubit 0 → control, qubit 1 → target)
 qc.CNOT(0, 1);
 
+// Draw a circuit
+qc.Draw();
+
 // Measure full state
 Console.WriteLine($"Measured: {qc.Measure()}"); // Possible: 00 or 11
 ```
@@ -70,20 +73,23 @@ qc.Initialize(0, new Complex(1, 1), new Complex(2, 2));
 
 ### 🌀 Gate Application
 
-QuantumNet includes several built-in quantum gates:
+Qubit.NET includes several built-in quantum gates:
 
 #### ✅ Single-Qubit Gates
 
-| Method    | Description                   |
-|-----------|-------------------------------|
-| `H(q)`    | Hadamard                      |
-| `X(q)`    | Pauli-X (NOT)                 |
-| `Y(q)`    | Pauli-Y                       |
-| `Z(q)`    | Pauli-Z                       |
-| `S(q)`    | Phase gate (√Z)               |
-| `Sdag(q)` | Conjugate transpose of S (S†) |
-| `T(q)`    | T gate (fourth root of Z)     |
-| `Tdag(q)` | Conjugate transpose of T (T†) |
+| Method     | Description                       |
+|------------|-----------------------------------|
+| `H(q)`     | Hadamard                          |
+| `X(q)`     | Pauli-X (NOT)                     |
+| `Y(q)`     | Pauli-Y                           |
+| `Z(q)`     | Pauli-Z                           |
+| `S(q)`     | Phase gate (√Z)                   |
+| `Sdag(q)`  | Conjugate transpose of S (S†)     |
+| `T(q)`     | T gate (fourth root of Z)         |
+| `Tdag(q)`  | Conjugate transpose of T (T†)     |
+| `Rx(q, θ)` | Rotation around X-axis by angle θ |
+| `Ry(q, θ)` | Rotation around Y-axis by angle θ |
+| `Rz(q, θ)` | Rotation around Z-axis by angle θ |
 
 ```csharp
 qc.H(0);
@@ -147,7 +153,7 @@ qc.H(0);
 qc.CNOT(0, 1);
 qc.Measure();
 
-string results = Simulator.Run(qc, 1000)[0].GetStringResult();
+string results = Simulator.Run(qc, 1000)[0].GetStringResult(qc.QubitCount);
 Console.WriteLine(results);
 ```
 
@@ -158,9 +164,7 @@ Console.WriteLine(results);
 - [ ] Partial qubit measurement
 - [ ] Entanglement entropy measurements
 - [ ] Noise simulation (decoherence, damping)
-- [ ] Visualization of circuits and states
 - [ ] Circuit export in QASM or JSON
-- [ ] Built-in examples: Bell state, teleportation, etc.
 
 ---
 
