@@ -6,6 +6,7 @@ namespace Qubit.NET.Gates;
 /// </summary>
 internal enum GateType
 {
+    I,
     H,
     X,
     Y,

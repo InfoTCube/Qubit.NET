@@ -43,6 +43,7 @@ internal static class Helpers
     {
         return gateType switch
         {
+            GateType.I => ["I"],
             GateType.H => ["H"],
             GateType.X => ["X"],
             GateType.Y => ["Y"],

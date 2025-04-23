@@ -13,6 +13,12 @@ public static class QuantumGates
     private static readonly Complex TElement = new Complex(System.Math.Cos(System.Math.PI / 4), 
         System.Math.Sin(System.Math.PI / 4));
     
+    public static Complex[,] I => new Complex[,]
+    {
+        { 1, 0 },
+        { 0, 1 }
+    };
+    
     public static Complex[,] H => new Complex[,]
     {
         { InvSqrt2, InvSqrt2 },

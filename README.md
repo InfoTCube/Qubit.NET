@@ -79,6 +79,7 @@ Qubit.NET includes several built-in quantum gates:
 
 | Method     | Description                       |
 |------------|-----------------------------------|
+| `I(q)`     | Identity                          |
 | `H(q)`     | Hadamard                          |
 | `X(q)`     | Pauli-X (NOT)                     |
 | `Y(q)`     | Pauli-Y                           |

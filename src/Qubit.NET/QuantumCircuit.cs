@@ -168,6 +168,30 @@ public class QuantumCircuit
     }
 
     /// <summary>
+    /// Applies the Identity gate (I) to the specified qubit.
+    /// The Identity Gate leaves the qubit's state unchanged, essentially performing no operation on it.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the Identity gate to.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range.
+    /// </exception>
+    public void I(int qubit)
+    {
+        CheckQubit(qubit);
+        
+        Gate iGate = new Gate
+        {
+            GateType = GateType.I,
+            Matrix = QuantumGates.I,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(iGate);
+        
+        ApplyGate(QuantumGates.I, qubit);
+    }
+    
+    /// <summary>
     /// Applies the Hadamard gate (H) to the specified qubit.
     /// The Hadamard gate creates a superposition of the basis states.
     /// </summary>
