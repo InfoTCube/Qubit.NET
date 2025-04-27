@@ -1,3 +1,5 @@
+<img src="./img/qubitnet.png" alt="Qubit.NET logo" style="height: 250px"/>
+
 # Qubit.NET
 
 # 🧠 C# Quantum Computing Simulation Library
@@ -115,7 +117,7 @@ qc.CNOT(0, 1);
 
 | Method           | Description               |
 |------------------|---------------------------|
-| `Toffoli(c, t1, t2)` | Toffoli (CC-NOT) gate |
+| `Toffoli(c1, c2, t)` | Toffoli (CC-NOT) gate |
 | `Fredkin(c, t1, t2)` | Fredkin (C-SWAP) gate |
 
 ```csharp
