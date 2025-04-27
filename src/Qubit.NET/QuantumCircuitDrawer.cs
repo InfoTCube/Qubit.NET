@@ -13,12 +13,13 @@ public static class QuantumCircuitDrawer
     {
         IList<IList<(string, int)>> gatePositions = new List<IList<(string, int)>>();
         IList<IList<int>> barPositions = new List<IList<int>>();
+        IList<int> gateWidths = new List<int>();
 
         InitializeStructures(gatePositions, barPositions, circuit.QubitCount);
 
-        int lastGate = AssignGatePositions(gatePositions, barPositions, circuit);
+        int lastGate = AssignGatePositions(gatePositions, barPositions, gateWidths, circuit);
         
-        PrintGates(gatePositions, barPositions, circuit, lastGate);
+        PrintGates(gatePositions, barPositions, gateWidths, circuit, lastGate);
     }
     
     /// <summary>
@@ -43,6 +44,7 @@ public static class QuantumCircuitDrawer
     /// </summary>
     /// <param name="gatePositions">A list of gate symbols and their positions for each qubit line.</param>
     /// <param name="barPositions">A list of vertical bar positions used to connect multi-qubit gates.</param>
+    /// <param name="widths">A list where each integer holds an additional width of a gate.</param>
     /// <param name="circuit">The quantum circuit containing gates and qubit configuration.</param>
     /// <returns>The horizontal position (index) of the rightmost gate, used for drawing alignment.</returns>
     /// <remarks>
@@ -51,7 +53,7 @@ public static class QuantumCircuitDrawer
     /// are also placed between the involved qubits.
     /// </remarks>
     private static int AssignGatePositions(IList<IList<(string, int)>> gatePositions, IList<IList<int>> barPositions,
-        QuantumCircuit circuit)
+        IList<int> widths, QuantumCircuit circuit)
     {
         int lastGate = 0;
         
@@ -110,6 +112,11 @@ public static class QuantumCircuitDrawer
                 gatePositions[circuit.QubitCount-1-qubit].Add((reps[iter] ?? " ", farthestIndex));
                 iter++;
             }
+            
+            // Set additional length of a gate if needed
+            int maxWidth = reps.OrderByDescending(r => r.Length).First().Length - 1;
+            while(widths.Count <= farthestIndex) widths.Add(0);
+            widths[farthestIndex] = maxWidth > widths[farthestIndex] ? maxWidth : widths[farthestIndex];
 
             if (involvedQubits.Count > 1)
             {
@@ -134,6 +141,7 @@ public static class QuantumCircuitDrawer
     /// </summary>
     /// <param name="gatePositions">A list of gate symbols and their positions for each qubit line.</param>
     /// <param name="barPositions">A list of vertical bar positions for multi-qubit gates.</param>
+    /// <param name="widths">A list where each integer holds an additional width of a gate.</param>
     /// <param name="circuit">The quantum circuit containing qubit information and initial states.</param>
     /// <param name="lastGate">The index of the rightmost gate, used for alignment and padding.</param>
     /// <remarks>
@@ -141,7 +149,7 @@ public static class QuantumCircuitDrawer
     /// Gates are color-highlighted and aligned based on position. Multi-qubit gates are connected with vertical bars.
     /// </remarks>
     private static void PrintGates(IList<IList<(string, int)>> gatePositions, IList<IList<int>> barPositions,
-        QuantumCircuit circuit, int lastGate)
+        IList<int> widths, QuantumCircuit circuit, int lastGate)
     {
         ConsoleColor defaultColor = Console.ForegroundColor;
 
@@ -154,10 +162,11 @@ public static class QuantumCircuitDrawer
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write($"q{i} ({initState}): ");
             Console.ForegroundColor = defaultColor;
-
+            
             foreach (var gatePos in gatePositions[circuit.QubitCount-1-i])
             {
-                Console.Write(new string('\u2500', (gatePos.Item2-counter-1)*5));
+                int additionalWidth = widths.Skip(counter+1).Take(gatePos.Item2 - counter - 1).Sum();
+                Console.Write(new string('\u2500', ((gatePos.Item2-counter-1)*5)+additionalWidth));
                 counter = gatePos.Item2;
                 
                 if (gatePos.Item1 == "|")
@@ -166,7 +175,7 @@ public static class QuantumCircuitDrawer
                     Console.ForegroundColor = ConsoleColor.DarkBlue;
                     Console.Write("|");
                     Console.ForegroundColor = defaultColor;
-                    Console.Write(new string('\u2500', 2));
+                    Console.Write(new string('\u2500', 2+widths[counter]));
                     continue;
                 } 
                 if (gatePos.Item1 == "@")
@@ -175,7 +184,7 @@ public static class QuantumCircuitDrawer
                     Console.ForegroundColor = ConsoleColor.DarkBlue;
                     Console.Write("@");
                     Console.ForegroundColor = defaultColor;
-                    Console.Write(new string('\u2500', 2));
+                    Console.Write(new string('\u2500', (2+widths[counter])));
                     continue;
                 }
                 
@@ -183,16 +192,18 @@ public static class QuantumCircuitDrawer
                 Console.ForegroundColor = ConsoleColor.DarkBlue;
                 Console.Write($"[{gatePos.Item1}]");
                 Console.ForegroundColor = defaultColor;
-                Console.Write("\u2500");
+                Console.Write(new string('\u2500', (2+widths[counter]-gatePos.Item1.Length)));
             }
 
             if (!gatePositions[circuit.QubitCount - 1 - i].Any())
             {
-                Console.Write(new string('\u2500', (lastGate+1)*5));
+                int additionalWidth = widths.Sum();
+                Console.Write(new string('\u2500', ((lastGate+1)*5)+additionalWidth));
             } 
             else if (counter < lastGate)
             {
-                Console.Write(new string('\u2500', (lastGate-counter)*5));
+                int additionalWidth = widths.Skip(counter+1).Take(lastGate - counter).Sum();
+                Console.Write(new string('\u2500', ((lastGate-counter)*5)+additionalWidth));
             }
 
             Console.WriteLine();
@@ -202,15 +213,16 @@ public static class QuantumCircuitDrawer
             foreach (var barPos in barPositions[circuit.QubitCount-1-i])
             {
                 if(i == 0) continue;
-                
-                Console.Write(new string(' ', (barPos-counter-1)*5));
+
+                int additionalWidth = widths.Skip(counter+1).Take(barPos - counter - 1).Sum();
+                Console.Write(new string(' ', ((barPos-counter-1)*5)+additionalWidth));
                 counter = barPos;
                 
                 Console.Write(new string(' ', 2));
                 Console.ForegroundColor = ConsoleColor.DarkBlue;
                 Console.Write("|");
                 Console.ForegroundColor = defaultColor;
-                Console.Write(new string(' ', 2));
+                Console.Write(new string(' ', (2+widths[barPos])));
             }
             
             Console.WriteLine();
