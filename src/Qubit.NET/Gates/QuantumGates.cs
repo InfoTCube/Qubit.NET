@@ -134,6 +134,48 @@ public static class QuantumGates
         { 0, 0, InvSqrt2, InvSqrt2 },
         { 0, 0, InvSqrt2, -InvSqrt2 }
     };
+    
+    public static Complex[,] CRx(double theta)
+    {
+        Complex cosTheta = Complex.Cos(theta / 2);
+        Complex sinTheta = Complex.Sin(theta / 2);
+        
+        return new Complex[,]
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, cosTheta, -Complex.ImaginaryOne * sinTheta },
+            { 0, 0, -Complex.ImaginaryOne * sinTheta, cosTheta }
+        };
+    }
+    
+    public static Complex[,] CRy(double theta)
+    {
+        Complex cosTheta = Complex.Cos(theta / 2);
+        Complex sinTheta = Complex.Sin(theta / 2);
+        
+        return new Complex[,]
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, cosTheta, -sinTheta },
+            { 0, 0, sinTheta, cosTheta }
+        };
+    }
+    
+    public static Complex[,] CRz(double theta)
+    {
+        Complex expNeg = Complex.Exp(-Complex.ImaginaryOne * (theta / 2));
+        Complex expPos = Complex.Exp(Complex.ImaginaryOne * (theta / 2));
+        
+        return new Complex[,]
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, expNeg, 0 },
+            { 0, 0, 0, expPos }
+        };
+    }
 
     public static Complex[,] SWAP => new Complex[,]
     {

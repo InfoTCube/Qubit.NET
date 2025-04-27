@@ -2,7 +2,6 @@ using System.Numerics;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
-using Qubit.NET.Utilities;
 
 namespace Qubit.NET.Simulation;
 
@@ -125,7 +124,7 @@ public static class Simulator
                 or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz:
                 stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
                 break;
-            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH:
+            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy or GateType.CRz:
                 stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix, 
                     [currentGate.TargetQubits.First(), currentGate.ControlQubits.First()]);
                 break;

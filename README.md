@@ -107,6 +107,9 @@ qc.X(1);
 | `CY(c, t)`       | Controlled-Y gate           |
 | `CZ(c, t)`       | Controlled-Z gate           |
 | `CH(c, t)`       | Controlled-Hadamard gate    |
+| `CRx(c, t, θ)`   | Controlled-Rx gate          |
+| `CRy(c, t, θ)`   | Controlled-Ry gate          |
+| `CRz(c, t, θ)`   | Controlled-Rz gate          |
 | `SWAP(q1, q2)`   | SWAP gate (exchanges qubits)|
 
 ```csharp

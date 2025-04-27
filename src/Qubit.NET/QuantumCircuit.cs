@@ -570,6 +570,90 @@ public class QuantumCircuit
         
         ApplyGate(QuantumGates.CH, [targetQubit, controlQubit]);
     }
+    
+    /// <summary>
+    /// Applies the CRx gate (Controlled-Rx) to the specified qubits.
+    /// The CRx gate applies the Rx to the target qubit if the control qubit is in state |1⟩.
+    /// </summary>
+    /// <param name="controlQubit">The index of the control qubit.</param>
+    /// <param name="targetQubit">The index of the target qubit.</param>
+    /// <param name="theta">The angle (in radians) by which to rotate the qubit's state around the x-axis.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if any of the qubit indices are out of range.
+    /// </exception>
+    public void CRx(int controlQubit, int targetQubit, double theta)
+    {
+        CheckQubit(controlQubit);
+        CheckQubit(targetQubit);
+        
+        Gate crxGate = new Gate
+        {
+            GateType = GateType.CRx,
+            Matrix = QuantumGates.CRx(theta),
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(crxGate);
+        
+        ApplyGate(QuantumGates.CRx(theta), [targetQubit, controlQubit]);
+    }
+    
+    /// <summary>
+    /// Applies the CRy gate (Controlled-Ry) to the specified qubits.
+    /// The CRy gate applies the Ry to the target qubit if the control qubit is in state |1⟩.
+    /// </summary>
+    /// <param name="controlQubit">The index of the control qubit.</param>
+    /// <param name="targetQubit">The index of the target qubit.</param>
+    /// <param name="theta">The angle (in radians) by which to rotate the qubit's state around the y-axis.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if any of the qubit indices are out of range.
+    /// </exception>
+    public void CRy(int controlQubit, int targetQubit, double theta)
+    {
+        CheckQubit(controlQubit);
+        CheckQubit(targetQubit);
+        
+        Gate cryGate = new Gate
+        {
+            GateType = GateType.CRy,
+            Matrix = QuantumGates.CRy(theta),
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(cryGate);
+        
+        ApplyGate(QuantumGates.CRy(theta), [targetQubit, controlQubit]);
+    }
+    
+    /// <summary>
+    /// Applies the CRz gate (Controlled-Rz) to the specified qubits.
+    /// The CRz gate applies the Rz to the target qubit if the control qubit is in state |1⟩.
+    /// </summary>
+    /// <param name="controlQubit">The index of the control qubit.</param>
+    /// <param name="targetQubit">The index of the target qubit.</param>
+    /// <param name="theta">The angle (in radians) by which to rotate the qubit's state around the z-axis.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if any of the qubit indices are out of range.
+    /// </exception>
+    public void CRz(int controlQubit, int targetQubit, double theta)
+    {
+        CheckQubit(controlQubit);
+        CheckQubit(targetQubit);
+        
+        Gate crzGate = new Gate
+        {
+            GateType = GateType.CRz,
+            Matrix = QuantumGates.CRz(theta),
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(crzGate);
+        
+        ApplyGate(QuantumGates.CRz(theta), [targetQubit, controlQubit]);
+    }
 
     /// <summary>
     /// Applies the SWAP gate to the specified qubits, exchanging their states.
