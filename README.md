@@ -79,20 +79,21 @@ Qubit.NET includes several built-in quantum gates:
 
 #### ✅ Single-Qubit Gates
 
-| Method     | Description                       |
-|------------|-----------------------------------|
-| `I(q)`     | Identity                          |
-| `H(q)`     | Hadamard                          |
-| `X(q)`     | Pauli-X (NOT)                     |
-| `Y(q)`     | Pauli-Y                           |
-| `Z(q)`     | Pauli-Z                           |
-| `S(q)`     | Phase gate (√Z)                   |
-| `Sdag(q)`  | Conjugate transpose of S (S†)     |
-| `T(q)`     | T gate (fourth root of Z)         |
-| `Tdag(q)`  | Conjugate transpose of T (T†)     |
-| `Rx(q, θ)` | Rotation around X-axis by angle θ |
-| `Ry(q, θ)` | Rotation around Y-axis by angle θ |
-| `Rz(q, θ)` | Rotation around Z-axis by angle θ |
+| Method           | Description                        |
+|------------------|------------------------------------|
+| `I(q)`           | Identity                           |
+| `H(q)`           | Hadamard                           |
+| `X(q)`           | Pauli-X (NOT)                      |
+| `Y(q)`           | Pauli-Y                            |
+| `Z(q)`           | Pauli-Z                            |
+| `S(q)`           | Phase gate (√Z)                    |
+| `Sdag(q)`        | Conjugate transpose of S (S†)      |
+| `T(q)`           | T gate (fourth root of Z)          |
+| `Tdag(q)`        | Conjugate transpose of T (T†)      |
+| `Rx(q, θ)`       | Rotation around X-axis by angle θ  |
+| `Ry(q, θ)`       | Rotation around Y-axis by angle θ  |
+| `Rz(q, θ)`       | Rotation around Z-axis by angle θ  |
+| `U3(q, θ, φ, λ)` | General single-qubit rotation gate |
 
 ```csharp
 qc.H(0);

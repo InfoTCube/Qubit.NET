@@ -55,6 +55,7 @@ internal static class Helpers
             GateType.Rx => ["Rx"],
             GateType.Ry => ["Ry"],
             GateType.Rz => ["Rz"],
+            GateType.U3 => ["U3"],
             GateType.CNOT => ["@", "+"],
             GateType.CY => ["@", "Y"],
             GateType.CZ => ["@", "Z"],

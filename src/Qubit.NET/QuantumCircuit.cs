@@ -464,6 +464,35 @@ public class QuantumCircuit
     }
     
     /// <summary>
+    /// Applies the U3 gate to the specified qubit.
+    /// The U3 gate is the most general single-qubit gate, capable of performing any rotation
+    /// on the Bloch sphere using three angles: θ (theta), φ (phi), and λ (lambda).
+    /// The matrix representation of the U3 gate is used to modify the qubit's state accordingly.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the U3 gate to.</param>
+    /// <param name="theta">The rotation angle (in radians) around the x-axis and z-axis combined.</param>
+    /// <param name="phi">The phase angle (in radians) applied before the rotation.</param>
+    /// <param name="lambda">The phase angle (in radians) applied after the rotation.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
+    /// </exception>
+    public void U3(int qubit, double theta, double phi, double lambda)
+    {
+        CheckQubit(qubit);
+        
+        Gate u3Gate = new Gate
+        {
+            GateType = GateType.U3,
+            Matrix = QuantumGates.U3(theta, phi, lambda),
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(u3Gate);
+        
+        ApplyGate(QuantumGates.U3(theta, phi, lambda), qubit);
+    }
+    
+    /// <summary>
     /// Applies the CNOT (also called CX) gate (Controlled-NOT) to the specified qubits.
     /// The CNOT gate flips the target qubit if the control qubit is in state |1>.
     /// </summary>

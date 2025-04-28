@@ -102,6 +102,21 @@ public static class QuantumGates
             { 0, expPos }
         };
     }
+
+    public static Complex[,] U3(double theta, double phi, double lambda)
+    {
+        Complex cosTheta = Complex.Cos(theta / 2);
+        Complex sinTheta = Complex.Sin(theta / 2);
+        Complex expPhi = Complex.Exp(Complex.ImaginaryOne * phi);
+        Complex expLambda = Complex.Exp(Complex.ImaginaryOne * lambda);
+        Complex expPhiPlusLambda = Complex.Exp(Complex.ImaginaryOne * (phi + lambda));
+
+        return new Complex[,]
+        {
+            { cosTheta, -expLambda * sinTheta },
+            { expPhi * sinTheta, expPhiPlusLambda * cosTheta }
+        };
+    }
     
     public static Complex[,] CNOT => new Complex[,]
     {

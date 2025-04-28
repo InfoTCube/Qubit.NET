@@ -18,6 +18,7 @@ internal enum GateType
     Rx,
     Ry,
     Rz,
+    U3,
     CNOT,
     CY,
     CZ,
