@@ -26,6 +26,7 @@ internal enum GateType
     CRx,
     CRy,
     CRz,
+    CU3,
     SWAP,
     Toffoli,
     Fredkin,

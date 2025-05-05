@@ -191,6 +191,23 @@ public static class QuantumGates
             { 0, 0, 0, expPos }
         };
     }
+    
+    public static Complex[,] CU3(double theta, double phi, double lambda)
+    {
+        Complex cosTheta = Complex.Cos(theta / 2);
+        Complex sinTheta = Complex.Sin(theta / 2);
+        Complex expPhi = Complex.Exp(Complex.ImaginaryOne * phi);
+        Complex expLambda = Complex.Exp(Complex.ImaginaryOne * lambda);
+        Complex expPhiPlusLambda = Complex.Exp(Complex.ImaginaryOne * (phi + lambda));
+
+        return new Complex[,]
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, cosTheta, -expLambda * sinTheta },
+            { 0, 0, expPhi * sinTheta, expPhiPlusLambda * cosTheta }
+        };
+    }
 
     public static Complex[,] SWAP => new Complex[,]
     {

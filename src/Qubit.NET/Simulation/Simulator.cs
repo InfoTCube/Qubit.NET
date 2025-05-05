@@ -124,7 +124,8 @@ public static class Simulator
                 or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz or GateType.U3:
                 stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
                 break;
-            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy or GateType.CRz:
+            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy 
+                or GateType.CRz or GateType.CU3:
                 stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix, 
                     [currentGate.TargetQubits.First(), currentGate.ControlQubits.First()]);
                 break;

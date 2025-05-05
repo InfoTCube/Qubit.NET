@@ -683,6 +683,36 @@ public class QuantumCircuit
         
         ApplyGate(QuantumGates.CRz(theta), [targetQubit, controlQubit]);
     }
+    
+    /// <summary>
+    /// Applies the CU3 gate to the specified qubits.
+    /// The CU3 gate applies the U3 to the target qubit if the control qubit is in state |1⟩.
+    /// </summary>
+    /// <param name="controlQubit">The index of the control qubit.</param>
+    /// <param name="targetQubit">The index of the target qubit.</param>
+    /// <param name="theta">The rotation angle (in radians) around the x-axis and z-axis combined.</param>
+    /// <param name="phi">The phase angle (in radians) applied before the rotation.</param>
+    /// <param name="lambda">The phase angle (in radians) applied after the rotation.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if any of the qubit indices are out of range.
+    /// </exception>
+    public void CU3(int controlQubit, int targetQubit, double theta, double phi, double lambda)
+    {
+        CheckQubit(controlQubit);
+        CheckQubit(targetQubit);
+        
+        Gate cu3Gate = new Gate
+        {
+            GateType = GateType.CU3,
+            Matrix = QuantumGates.CU3(theta, phi, lambda),
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        };
+        
+        Gates.Add(cu3Gate);
+        
+        ApplyGate(QuantumGates.CU3(theta, phi, lambda), [targetQubit, controlQubit]);
+    }
 
     /// <summary>
     /// Applies the SWAP gate to the specified qubits, exchanging their states.

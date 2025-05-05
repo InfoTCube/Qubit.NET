@@ -63,6 +63,7 @@ internal static class Helpers
             GateType.CRx => ["@", "Rx"],
             GateType.CRy => ["@", "Ry"],
             GateType.CRz => ["@", "Rz"],
+            GateType.CU3 => ["@", "U3"],
             GateType.SWAP => ["X", "X"],
             GateType.Toffoli => ["@", "+", "+"],
             GateType.Fredkin => ["@", "X", "X"],
