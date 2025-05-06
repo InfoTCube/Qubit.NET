@@ -1,3 +1,4 @@
+using Qubit.NET.Gates;
 using Qubit.NET.Utilities;
 
 namespace Qubit.NET;
@@ -61,8 +62,13 @@ public static class QuantumCircuitDrawer
         {
             var controlQubits = gate.ControlQubits ?? Array.Empty<int>();
             var targetQubits = gate.TargetQubits ?? Array.Empty<int>();
+
+            string[] reps;
             
-            string[] reps = Helpers.GateTypeToCharRepresentation(gate.GateType);
+            if(gate.GateType == GateType.Measure)
+                reps = Enumerable.Repeat("M", gate.TargetQubits.Length).ToArray();
+            else
+                reps = Helpers.GateTypeToCharRepresentation(gate.GateType);
             
             var involvedQubits = controlQubits.Concat(targetQubits).ToList();
 

@@ -10,7 +10,7 @@ namespace Qubit.NET.Gates;
 internal class Gate
 {
     public GateType GateType { get; set; }
-    public Complex[,] Matrix { get; set; }
-    public int[] TargetQubits { get; set; }
-    public int[] ControlQubits { get; set; }
+    public Complex[,]? Matrix { get; set; }
+    public int[]? TargetQubits { get; set; }
+    public int[]? ControlQubits { get; set; }
 }

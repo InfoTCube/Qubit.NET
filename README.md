@@ -102,16 +102,17 @@ qc.X(1);
 
 #### ✅ Two-Qubit Gates
 
-| Method           | Description                 |
-|------------------|-----------------------------|
-| `CNOT(c, t)`     | Controlled-NOT gate         |
-| `CY(c, t)`       | Controlled-Y gate           |
-| `CZ(c, t)`       | Controlled-Z gate           |
-| `CH(c, t)`       | Controlled-Hadamard gate    |
-| `CRx(c, t, θ)`   | Controlled-Rx gate          |
-| `CRy(c, t, θ)`   | Controlled-Ry gate          |
-| `CRz(c, t, θ)`   | Controlled-Rz gate          |
-| `SWAP(q1, q2)`   | SWAP gate (exchanges qubits)|
+| Method               | Description                 |
+|----------------------|-----------------------------|
+| `CNOT(c, t)`         | Controlled-NOT gate         |
+| `CY(c, t)`           | Controlled-Y gate           |
+| `CZ(c, t)`           | Controlled-Z gate           |
+| `CH(c, t)`           | Controlled-Hadamard gate    |
+| `CRx(c, t, θ)`       | Controlled-Rx gate          |
+| `CRy(c, t, θ)`       | Controlled-Ry gate          |
+| `CRz(c, t, θ)`       | Controlled-Rz gate          |
+| `CU3(c, t, θ, φ, λ)` | Controlled-U3 gate          |
+| `SWAP(q1, q2)`       | SWAP gate (exchanges qubits)|
 
 ```csharp
 qc.CNOT(0, 1);
@@ -138,10 +139,12 @@ Work in progess...
 ### 📏 Measurement
 
 Measure the entire quantum system and get a classical bitstring (e.g. `"00"`, `"11"`).
-You can get one result using basic vector state real-time simulator.
+You can get one result using basic vector state real-time simulator. You can also perform partial measurements to observe only selected qubits, yielding a shorter bitstring corresponding to the measured subset - the bits in the result are ordered exactly as the qubit indices are listed in the argument.
 
 ```csharp
 string result = qc.Measure();
+
+string result = qc.Measure(0, 2);
 ```
 
 The measurement collapses the quantum state probabilistically based on the amplitudes.
@@ -160,7 +163,7 @@ qc.H(0);
 qc.CNOT(0, 1);
 qc.Measure();
 
-string results = Simulator.Run(qc, 1000)[0].GetStringResult(qc.QubitCount);
+string results = Simulator.Run(qc, 1000)[0].GetStringResult();
 Console.WriteLine(results);
 ```
 
@@ -168,7 +171,7 @@ Console.WriteLine(results);
 
 ## 📌 Future Roadmap
 
-- [ ] Partial qubit measurement
+- [x] Partial qubit measurement
 - [ ] Entanglement entropy measurements
 - [ ] Noise simulation (decoherence, damping)
 - [ ] Circuit export in QASM or JSON

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.ObjectModel;
 using System.Numerics;
+using System.Security.AccessControl;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
@@ -79,22 +80,36 @@ public class QuantumCircuit
     /// The method updates the quantum state vector after the measurement, reducing the state to the measured result.
     /// </summary>
     /// <returns>The index of the measured basis state, representing the outcome of the measurement.</returns>
-    public string Measure()
+    public string Measure(params int[] qubits)
     {
-        // Perform a measurement by sampling from the current state vector probabilities
-        var result = QuantumMath.SampleMeasurement(StateVector);
-    
-        // Collapse the quantum state to the measured state (collapse the superposition)
-        StateVector = QuantumMath.CollapseToState(StateVector, result);
-
+        foreach (var q in qubits)
+            CheckQubit(q);
+        
+        CheckIfDifferentQubits(qubits);
+        
         Gate measure = new Gate()
         {
-            GateType = GateType.Measure
+            GateType = GateType.Measure,
+            TargetQubits = qubits.Length == 0 ? Enumerable.Range(0, QubitCount).ToArray() : qubits
         };
         
         Gates.Add(measure);
         
-        return Convert.ToString(result, 2).PadLeft(QubitCount, '0');
+        if (qubits.Length == 0)
+        {
+            // Perform a measurement by sampling from the current state vector probabilities
+            var result = QuantumMath.SampleMeasurement(StateVector);
+    
+            // Collapse the quantum state to the measured state (collapse the superposition)
+            StateVector = QuantumMath.CollapseToState(StateVector, result);
+            
+            return Convert.ToString(result, 2).PadLeft(QubitCount, '0');
+        }
+        
+        var partialResult = QuantumMath.SamplePartialMeasurement(StateVector, qubits);
+        StateVector = QuantumMath.CollapseToPartialMeasurement(StateVector, qubits, partialResult);
+            
+        return Convert.ToString(partialResult, 2).PadLeft(qubits.Length, '0');
     }
 
     /// <summary>

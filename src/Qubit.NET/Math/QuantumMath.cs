@@ -174,4 +174,103 @@ internal static class QuantumMath
         
         return collapsedState;
     }
+    
+    /// <summary>
+    /// Samples a measurement result from a subset of qubits in a quantum state vector (partial measurement).
+    /// The method computes the probabilities of all possible outcomes on the measured qubits and returns
+    /// a randomly chosen outcome based on those probabilities.
+    /// </summary>
+    /// <param name="state">The current quantum state vector of the entire system.</param>
+    /// <param name="measuredQubits">
+    /// Array of qubit indices to be measured. The result's bit order corresponds to the order of indices in this array.
+    /// </param>
+    /// <returns>
+    /// An integer representing the measurement outcome, encoded as a bitstring ordered according to <paramref name="measuredQubits"/>.
+    /// </returns>
+    internal static int SamplePartialMeasurement(Complex[] state, int[] measuredQubits)
+    {
+        int outcomeCount = 1 << measuredQubits.Length;
+        double[] outcomeProbabilities = new double[outcomeCount];
+        double totalProbability = 0.0;
+
+        for (int i = 0; i < state.Length; i++)
+        {
+            int partialMeasurement = 0;
+            for (int bit = 0; bit < measuredQubits.Length; bit++)
+            {
+                int qubitIndex = measuredQubits[bit];
+                int bitValue = (i >> qubitIndex) & 1;
+                partialMeasurement |= (bitValue << (measuredQubits.Length - 1 - bit));
+            }
+
+            double prob = state[i].Real * state[i].Real + state[i].Imaginary * state[i].Imaginary;
+            outcomeProbabilities[partialMeasurement] += prob;
+            totalProbability += prob;
+        }
+        
+        for (int i = 0; i < outcomeCount; i++)
+        {
+            outcomeProbabilities[i] /= totalProbability;
+        }
+        
+        double randomValue = new Random().NextDouble();
+        double cumulative = 0.0;
+
+        for (int i = 0; i < outcomeCount; i++)
+        {
+            cumulative += outcomeProbabilities[i];
+            if (randomValue <= cumulative)
+            {
+                return i;
+            }
+        }
+
+        return outcomeCount - 1;
+    }
+    
+    /// <summary>
+    /// Collapses the quantum state vector based on the result of a partial measurement.
+    /// Only the amplitudes consistent with the measured result on the specified qubits are preserved;
+    /// all other amplitudes are set to zero. The remaining state is renormalized to maintain a valid quantum state.
+    /// </summary>
+    /// <param name="state">The quantum state vector before measurement.</param>
+    /// <param name="measuredQubits">Indices of the qubits that were measured.</param>
+    /// <param name="result">
+    /// The integer-encoded result of the measurement, where the bit order corresponds to the order of qubit indices in <paramref name="measuredQubits"/>.
+    /// </param>
+    /// <returns>The collapsed and normalized quantum state vector after partial measurement.</returns>
+    internal static Complex[] CollapseToPartialMeasurement(Complex[] state, int[] measuredQubits, int result)
+    {
+        Complex[] collapsed = new Complex[state.Length];
+        double normSquared = 0.0;
+
+        for (int i = 0; i < state.Length; i++)
+        {
+            int extracted = 0;
+            for (int bit = 0; bit < measuredQubits.Length; bit++)
+            {
+                int qubitIndex = measuredQubits[bit];
+                int bitValue = (i >> qubitIndex) & 1;
+                extracted |= (bitValue << (measuredQubits.Length - 1 - bit));
+            }
+
+            if (extracted == result)
+            {
+                collapsed[i] = state[i];
+                normSquared += state[i].Magnitude * state[i].Magnitude;
+            }
+            else
+            {
+                collapsed[i] = Complex.Zero;
+            }
+        }
+        
+        double norm = System.Math.Sqrt(normSquared);
+        for (int i = 0; i < collapsed.Length; i++)
+        {
+            collapsed[i] /= norm;
+        }
+
+        return collapsed;
+    }
 }

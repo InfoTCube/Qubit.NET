@@ -18,12 +18,12 @@ public static class Simulator
     /// <param name="qc">The quantum circuit to simulate.</param>
     /// <param name="shots">The number of times the simulation should be run. Default is 1.</param>
     /// <returns>
-    /// A list of integer arrays representing measurement results for each shot.
+    /// A list of integer arrays and integers representing measurement results for each shot and number of qubits involved in measurement.
     /// Each array contains counts of observed outcomes.
     /// </returns>
-    public static IList<int[]> Run(QuantumCircuit qc, int shots = 1)
+    public static IList<(int[], int)> Run(QuantumCircuit qc, int shots = 1)
     {
-        if(qc.Gates.All(g => g.GateType != GateType.Measure)) return new List<int[]>();
+        if (qc.Gates.All(g => g.GateType != GateType.Measure)) return new List<(int[], int)>();
         
         Complex[] stateVector = new Complex[1 << qc.QubitCount];
         stateVector[0] = new Complex(1, 0);
@@ -46,7 +46,7 @@ public static class Simulator
             currentGateType = qc.Gates.Count > 0 ? qc.Gates.First().GateType : currentGateType;
         }
         
-        IList<int[]> results = new List<int[]>();
+        IList<(int[], int)> results = new List<(int[], int)>();
         
         for (int i = 0; i < shots; i++)
         {
@@ -58,14 +58,12 @@ public static class Simulator
             {
                 if (gate.GateType == GateType.Measure)
                 {
-                    int num = MeasureState(modStateVector);
-
-                    if (measurmentNumber + 1 > results.Count)
-                    {
-                        results.Add(new int[1L << qc.QubitCount]);
-                    }
+                    int num = MeasureState(ref modStateVector, gate.TargetQubits);
                     
-                    results[measurmentNumber][num]++;
+                    if (measurmentNumber + 1 > results.Count)
+                        results.Add((new int[1L << qc.QubitCount], gate.TargetQubits.Length));
+
+                    results[measurmentNumber].Item1[num]++;
 
                     measurmentNumber++;
                 }
@@ -82,24 +80,24 @@ public static class Simulator
     /// <summary>
     /// Converts the result of a quantum circuit simulation into a human-readable string.
     /// </summary>
-    /// <param name="result">An array of measurement result counts.</param>
+    /// <param name="result">An array of measurement result counts and number of qubits in measurement.</param>
     /// <returns>
     /// A string formatted as a dictionary, where keys are binary representations of measurement outcomes,
     /// and values are the counts of how often each outcome occurred.
     /// </returns>
-    public static string GetStringResult(this int[] result, int numQubits)
+    public static string GetStringResult(this (int[], int) result)
     {
         StringBuilder sb = new StringBuilder();
         sb.Append("{");
-        for (int i = 0; i < result.Length; i++)
+        for (int i = 0; i < result.Item1.Length; i++)
         {
-            if(result[i] == 0)
+            if(result.Item1[i] == 0)
                 continue;
             
             sb.Append("'");
-            sb.Append(Convert.ToString(i, 2).PadLeft(numQubits, '0'));
+            sb.Append(Convert.ToString(i, 2).PadLeft(result.Item2, '0'));
             sb.Append("': ");
-            sb.Append(result[i].ToString());
+            sb.Append(result.Item1[i].ToString());
             sb.Append(", ");
         }
         
@@ -152,14 +150,15 @@ public static class Simulator
     /// The method updates the quantum state vector after the measurement, reducing the state to the measured result.
     /// </summary>
     /// <param name="stateVector">The current state vector.</param>
+    /// <param name="qubits">An array of qubits to measure</param>
     /// <returns>The index of the measured basis state, representing the outcome of the measurement.</returns>
-    private static int MeasureState(Complex[] stateVector)
+    private static int MeasureState(ref Complex[] stateVector, int[] qubits)
     {
         // Perform a measurement by sampling from the current state vector probabilities
-        var result = QuantumMath.SampleMeasurement(stateVector);
+        var result = QuantumMath.SamplePartialMeasurement(stateVector, qubits);
     
         // Collapse the quantum state to the measured state (collapse the superposition)
-        stateVector = QuantumMath.CollapseToState(stateVector, result);
+        stateVector = QuantumMath.CollapseToPartialMeasurement(stateVector, qubits, result);
 
         return result;
     }
