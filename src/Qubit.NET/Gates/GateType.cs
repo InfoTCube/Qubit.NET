@@ -30,5 +30,6 @@ internal enum GateType
     SWAP,
     Toffoli,
     Fredkin,
+    Custom,
     Measure
 }

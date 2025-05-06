@@ -139,6 +139,10 @@ public static class Simulator
                 stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
                     [currentGate.TargetQubits[1], currentGate.TargetQubits[0], currentGate.ControlQubits.First()]);
                 break;
+            case GateType.Custom:
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
+                    currentGate.TargetQubits.Reverse().ToArray());
+                break;
         }
 
         return stateVector;

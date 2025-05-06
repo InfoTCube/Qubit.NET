@@ -813,6 +813,55 @@ public class QuantumCircuit
     }
 
     /// <summary>
+    /// Applies a custom quantum gate defined by a unitary matrix to the specified target qubits.
+    /// </summary>
+    /// <param name="matrix">
+    /// A unitary matrix of size 2ⁿ×2ⁿ representing the quantum operation, where n is the number of target qubits (1 to 4).
+    /// </param>
+    /// <param name="qubits">
+    /// Indices of the target qubits to which the custom gate is applied. Must contain 1 to 4 distinct qubit indices.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the number of qubits is not between 1 and 4, if qubit indices are not distinct,
+    /// if the matrix dimensions do not match 2ⁿ×2ⁿ, or if the matrix is not unitary.
+    /// </exception>
+    public void Custom(Complex[,] matrix, params int[] qubits)
+    {
+        int numQubits = qubits.Length;
+        if (numQubits < 1 || numQubits > 4)
+        {
+            throw new ArgumentException("Custom gate can only be applied to 1 to 4 qubits.");
+        }
+
+        foreach (int q in qubits)
+            CheckQubit(q);
+        
+        CheckIfDifferentQubits(qubits);
+        
+        int expectedMatrixSize = 1 << numQubits; // 2^n
+        if (matrix.GetLength(0) != expectedMatrixSize || matrix.GetLength(1) != expectedMatrixSize)
+        {
+            throw new ArgumentException($"Matrix size must be {expectedMatrixSize}x{expectedMatrixSize} for {numQubits} qubits.");
+        }
+        
+        if (!QuantumMath.IsUnitary(matrix))
+        {
+            throw new ArgumentException("The provided matrix is not unitary.");
+        }
+        
+        Gate customGate = new Gate
+        {
+            GateType = GateType.Custom,
+            Matrix = matrix,
+            TargetQubits = qubits
+        };
+        
+        Gates.Add(customGate);
+        
+        ApplyGate(matrix, qubits.Reverse().ToArray());
+    }
+
+    /// <summary>
     /// Converts a quantum state vector represented as an array of complex numbers into a string representation.
     /// The format of the string is: a |00⟩ + b |01⟩ + c |10⟩ + d |11⟩, where the coefficients are complex numbers.
     /// </summary>

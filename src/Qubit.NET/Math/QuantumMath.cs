@@ -273,4 +273,74 @@ internal static class QuantumMath
 
         return collapsed;
     }
+    
+    /// <summary>
+    /// Determines whether a given complex matrix is unitary.
+    /// </summary>
+    /// <param name="matrix">
+    /// A matrix of complex numbers to be tested for unitarity.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if the matrix is unitary (i.e., its conjugate transpose is its inverse); otherwise, <c>false</c>.
+    /// </returns>
+    internal static bool IsUnitary(Complex[,] matrix)
+    {
+        int rows = matrix.GetLength(0);
+        int cols = matrix.GetLength(1);
+
+        // Matrix must be square
+        if (rows != cols)
+            return false;
+
+        // Step 1: Calculate the conjugate transpose (A†) of the matrix
+        Complex[,] conjugateTranspose = new Complex[rows, cols];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                conjugateTranspose[i, j] = Complex.Conjugate(matrix[j, i]);
+            }
+        }
+
+        // Step 2: Multiply the matrix by its conjugate transpose (A * A†)
+        Complex[,] result = new Complex[rows, cols];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                Complex sum = Complex.Zero;
+                for (int k = 0; k < rows; k++)
+                {
+                    sum += matrix[i, k] * conjugateTranspose[k, j];
+                }
+                result[i, j] = sum;
+            }
+        }
+
+        // Step 3: Check if the result is the identity matrix
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                if (i == j)
+                {
+                    // Diagonal elements must be 1
+                    if (!result[i, j].Equals(Complex.One))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Off-diagonal elements must be 0
+                    if (!result[i, j].Equals(Complex.Zero))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 }

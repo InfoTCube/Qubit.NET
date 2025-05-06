@@ -68,6 +68,7 @@ internal static class Helpers
             GateType.Toffoli => ["@", "+", "+"],
             GateType.Fredkin => ["@", "X", "X"],
             GateType.Measure => ["M"],
+            GateType.Custom => ["C"],
             _ => [" "]
         };
     }

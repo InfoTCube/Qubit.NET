@@ -67,6 +67,8 @@ public static class QuantumCircuitDrawer
             
             if(gate.GateType == GateType.Measure)
                 reps = Enumerable.Repeat("M", gate.TargetQubits.Length).ToArray();
+            else if(gate.GateType == GateType.Custom)
+                reps = Enumerable.Repeat("C", gate.TargetQubits.Length).ToArray();
             else
                 reps = Helpers.GateTypeToCharRepresentation(gate.GateType);
             

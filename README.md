@@ -132,7 +132,23 @@ qc.Fredkin(0, 1, 2);
 
 #### ⏳ Custom Gate Support
 
-Work in progess...
+You can custom gates for 1-4 qubits.
+Remember that matrix must be a square matrix of size 2^n x 2^n, where n is number of qubits involved.
+The matrix must be unitary — 𝑈†𝑈 = 𝐼
+
+```csharp
+// Equivalent to CNOT(0, 1)
+
+var cx = new Complex[,]
+{
+    { 1, 0, 0, 0 },
+    { 0, 1, 0, 0 },
+    { 0, 0, 0, 1 },
+    { 0, 0, 1, 0 }
+};
+
+qc.Custom(cx, 0, 1);
+```
 
 ---
 
