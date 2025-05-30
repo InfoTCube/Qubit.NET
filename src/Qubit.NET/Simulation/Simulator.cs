@@ -119,7 +119,8 @@ public static class Simulator
         switch (gateType)
         {
             case GateType.I or GateType.H or GateType.X or GateType.Y or GateType.Z or GateType.S or GateType.Sdag 
-                or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz or GateType.U3:
+                or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz or GateType.SX 
+                or GateType.SY or GateType.SZ or GateType.U3:
                 stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
                 break;
             case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy 

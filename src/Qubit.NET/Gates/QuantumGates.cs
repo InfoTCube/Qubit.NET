@@ -102,6 +102,20 @@ public static class QuantumGates
             { 0, expPos }
         };
     }
+    
+    public static Complex[,] SX => new Complex[,]
+    {
+        { (1 + Complex.ImaginaryOne) / 2, (1 - Complex.ImaginaryOne) / 2 },
+        { (1 - Complex.ImaginaryOne) / 2, (1 + Complex.ImaginaryOne) / 2 }
+    };
+    
+    public static Complex[,] SY => new Complex[,]
+    {
+        { (1 + Complex.ImaginaryOne) / 2, (-1 - Complex.ImaginaryOne) / 2 },
+        { (1 + Complex.ImaginaryOne) / 2, (1 + Complex.ImaginaryOne) / 2 }
+    };
+
+    public static Complex[,] SZ => S;
 
     public static Complex[,] U3(double theta, double phi, double lambda)
     {

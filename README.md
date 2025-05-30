@@ -79,21 +79,24 @@ Qubit.NET includes several built-in quantum gates:
 
 #### ✅ Single-Qubit Gates
 
-| Method           | Description                        |
-|------------------|------------------------------------|
-| `I(q)`           | Identity                           |
-| `H(q)`           | Hadamard                           |
-| `X(q)`           | Pauli-X (NOT)                      |
-| `Y(q)`           | Pauli-Y                            |
-| `Z(q)`           | Pauli-Z                            |
-| `S(q)`           | Phase gate (√Z)                    |
-| `Sdag(q)`        | Conjugate transpose of S (S†)      |
-| `T(q)`           | T gate (fourth root of Z)          |
-| `Tdag(q)`        | Conjugate transpose of T (T†)      |
-| `Rx(q, θ)`       | Rotation around X-axis by angle θ  |
-| `Ry(q, θ)`       | Rotation around Y-axis by angle θ  |
-| `Rz(q, θ)`       | Rotation around Z-axis by angle θ  |
-| `U3(q, θ, φ, λ)` | General single-qubit rotation gate |
+| Method           | Description                             |
+|------------------|-----------------------------------------|
+| `I(q)`           | Identity                                |
+| `H(q)`           | Hadamard                                |
+| `X(q)`           | Pauli-X (NOT)                           |
+| `Y(q)`           | Pauli-Y                                 |
+| `Z(q)`           | Pauli-Z                                 |
+| `S(q)`           | Phase gate (√Z)                         |
+| `Sdag(q)`        | Conjugate transpose of S (S†)           |
+| `T(q)`           | T gate (fourth root of Z)               |
+| `Tdag(q)`        | Conjugate transpose of T (T†)           |
+| `Rx(q, θ)`       | Rotation around X-axis by angle θ       |
+| `Ry(q, θ)`       | Rotation around Y-axis by angle θ       |
+| `Rz(q, θ)`       | Rotation around Z-axis by angle θ       |
+| `SX(q)`          | Square-root of Pauli-X (√X)             |
+| `SY(q)`          | Square-root of Pauli-Y (√Y)             |
+| `SZ(q)`          | Square-root of Pauli-Z (√Z), aka S gate |
+| `U3(q, θ, φ, λ)` | General single-qubit rotation gate      |
 
 ```csharp
 qc.H(0);
@@ -130,7 +133,7 @@ qc.Toffoli(0, 1, 2);
 qc.Fredkin(0, 1, 2);
 ```
 
-#### ⏳ Custom Gate Support
+#### ✅ Custom Gate Support
 
 You can custom gates for 1-4 qubits.
 Remember that matrix must be a square matrix of size 2^n x 2^n, where n is number of qubits involved.

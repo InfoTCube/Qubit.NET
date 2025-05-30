@@ -479,6 +479,84 @@ public class QuantumCircuit
     }
     
     /// <summary>
+    /// Applies the square-root of Pauli-X gate (SX) to the specified qubit.
+    /// The SX gate performs a rotation of π/2 around the X-axis on the Bloch sphere, 
+    /// acting as the square root of the X (NOT) gate.
+    /// When applied twice, it is equivalent to the Pauli-X gate.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the SX gate to.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range.
+    /// </exception>
+    public void SX(int qubit)
+    {
+        CheckQubit(qubit);
+        
+        Gate sxGate = new Gate
+        {
+            GateType = GateType.SX,
+            Matrix = QuantumGates.SX,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(sxGate);
+        
+        ApplyGate(QuantumGates.SX, qubit);
+    }
+    
+    /// <summary>
+    /// Applies the square-root of Pauli-Y gate (SY) to the specified qubit.
+    /// The SY gate performs a rotation of π/2 around the Y-axis on the Bloch sphere, 
+    /// acting as the square root of the Y gate.
+    /// When applied twice, it is equivalent to the Pauli-Y gate.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the SY gate to.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range.
+    /// </exception>
+    public void SY(int qubit)
+    {
+        CheckQubit(qubit);
+        
+        Gate syGate = new Gate
+        {
+            GateType = GateType.SY,
+            Matrix = QuantumGates.SY,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(syGate);
+        
+        ApplyGate(QuantumGates.SY, qubit);
+    }
+    
+    /// <summary>
+    /// Applies the square-root of Pauli-Z gate (SZ), also known as the S gate, to the specified qubit.
+    /// The SZ gate performs a π/2 rotation around the Z-axis on the Bloch sphere,
+    /// acting as the square root of the Z gate.
+    /// When applied twice, it is equivalent to the Pauli-Z gate.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to apply the SZ gate to.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if the qubit index is out of range.
+    /// </exception>
+    public void SZ(int qubit)
+    {
+        CheckQubit(qubit);
+        
+        Gate syGate = new Gate
+        {
+            GateType = GateType.SZ,
+            Matrix = QuantumGates.SZ,
+            TargetQubits = [qubit]
+        };
+        
+        Gates.Add(syGate);
+        
+        ApplyGate(QuantumGates.SZ, qubit);
+    }
+    
+    /// <summary>
     /// Applies the U3 gate to the specified qubit.
     /// The U3 gate is the most general single-qubit gate, capable of performing any rotation
     /// on the Bloch sphere using three angles: θ (theta), φ (phi), and λ (lambda).
