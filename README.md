@@ -190,10 +190,10 @@ Console.WriteLine(results);
 
 ## 📌 Future Roadmap
 
-- [x] Partial qubit measurement
 - [ ] Entanglement entropy measurements
 - [ ] Noise simulation (decoherence, damping)
-- [ ] Circuit export in QASM or JSON
+- [ ] Circuit export in QASM
+- [ ] Possibility of using real random numbers (with API) in simulator
 
 ---
 
