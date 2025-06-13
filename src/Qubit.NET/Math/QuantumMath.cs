@@ -1,4 +1,5 @@
 using System.Numerics;
+using Qubit.NET.Utilities;
 
 namespace Qubit.NET.Math;
 
@@ -122,8 +123,9 @@ internal static class QuantumMath
     /// Samples a measurement from the quantum state vector for a multi-qubit system.
     /// </summary>
     /// <param name="state">The current quantum state vector.</param>
+    /// <param name="rand">Source of random numbers, can be psuedo, true random or custom.</param>
     /// <returns>The measured state as a bitstring, represented as an integer.</returns>
-    internal static int SampleMeasurement(Complex[] state)
+    internal static int SampleMeasurement(Complex[] state, IRandomSource rand)
     {
         double totalProbability = 0.0;
         double[] probabilities = new double[state.Length];
@@ -142,7 +144,7 @@ internal static class QuantumMath
         }
     
         // Generate a random number and pick the state based on probability
-        double randomValue = new Random().NextDouble();
+        double randomValue = rand.NextDouble();
         double cumulativeProbability = 0.0;
 
         for (int i = 0; i < state.Length; i++)
@@ -184,10 +186,11 @@ internal static class QuantumMath
     /// <param name="measuredQubits">
     /// Array of qubit indices to be measured. The result's bit order corresponds to the order of indices in this array.
     /// </param>
+    /// <param name="rand">Source of random numbers, can be psuedo, true random or custom.</param>
     /// <returns>
     /// An integer representing the measurement outcome, encoded as a bitstring ordered according to <paramref name="measuredQubits"/>.
     /// </returns>
-    internal static int SamplePartialMeasurement(Complex[] state, int[] measuredQubits)
+    internal static int SamplePartialMeasurement(Complex[] state, int[] measuredQubits, IRandomSource rand)
     {
         int outcomeCount = 1 << measuredQubits.Length;
         double[] outcomeProbabilities = new double[outcomeCount];
@@ -213,7 +216,7 @@ internal static class QuantumMath
             outcomeProbabilities[i] /= totalProbability;
         }
         
-        double randomValue = new Random().NextDouble();
+        double randomValue = rand.NextDouble();
         double cumulative = 0.0;
 
         for (int i = 0; i < outcomeCount; i++)

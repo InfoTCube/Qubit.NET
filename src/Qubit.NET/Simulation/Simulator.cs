@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
+using Qubit.NET.Utilities;
 
 namespace Qubit.NET.Simulation;
 
@@ -58,7 +59,7 @@ public static class Simulator
             {
                 if (gate.GateType == GateType.Measure)
                 {
-                    int num = MeasureState(ref modStateVector, gate.TargetQubits);
+                    int num = MeasureState(ref modStateVector, gate.TargetQubits, qc.RandomSource);
                     
                     if (measurmentNumber + 1 > results.Count)
                         results.Add((new int[1L << qc.QubitCount], gate.TargetQubits.Length));
@@ -156,11 +157,12 @@ public static class Simulator
     /// </summary>
     /// <param name="stateVector">The current state vector.</param>
     /// <param name="qubits">An array of qubits to measure</param>
+    /// <param name="randomSource">Source of random numbers for measuring.</param>
     /// <returns>The index of the measured basis state, representing the outcome of the measurement.</returns>
-    private static int MeasureState(ref Complex[] stateVector, int[] qubits)
+    private static int MeasureState(ref Complex[] stateVector, int[] qubits, IRandomSource randomSource)
     {
         // Perform a measurement by sampling from the current state vector probabilities
-        var result = QuantumMath.SamplePartialMeasurement(stateVector, qubits);
+        var result = QuantumMath.SamplePartialMeasurement(stateVector, qubits, randomSource);
     
         // Collapse the quantum state to the measured state (collapse the superposition)
         stateVector = QuantumMath.CollapseToPartialMeasurement(stateVector, qubits, result);

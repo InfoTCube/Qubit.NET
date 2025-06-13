@@ -188,12 +188,31 @@ Console.WriteLine(results);
 
 ---
 
+ ### 🎲 Randomness source
+
+Qubit.NET uses a pluggable randomness system through the IRandomSource interface. By default, it uses a pseudo-random generator (PseudoRandomSource). You can swap this out for your custom implementation.
+
+```csharp
+using Qubit.NET.Utilities;
+
+public class FixedRandomSource : IRandomSource
+{
+    public double NextDouble() => 0.42; // Always returns the same value
+}
+```
+
+Then you can use it in QuantumCircuit:
+
+```csharp
+QuantumCircuit qc = new QuantumCircuit(2);
+qc.RandomSource = new FixedRandomSource();
+```
+
 ## 📌 Future Roadmap
 
 - [ ] Entanglement entropy measurements
 - [ ] Noise simulation (decoherence, damping)
 - [ ] Circuit export in QASM
-- [ ] Possibility of using real random numbers (with API) in simulator
 
 ---
 

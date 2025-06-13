@@ -26,6 +26,13 @@ public class QuantumCircuit
     public Complex[] StateVector { get; private set; }
 
     /// <summary>
+    /// Source of randomness used by the simulator.
+    /// Defaults to a pseudo-random number generator but can be replaced
+    /// with truly random numbers from API or even custom implementation.
+    /// </summary>
+    public IRandomSource RandomSource { get; set; } = new PseudoRandomSource();
+
+    /// <summary>
     /// A list of quantum gates applied in the circuit.
     /// </summary>
     internal IList<Gate> Gates = new List<Gate>();
@@ -98,7 +105,7 @@ public class QuantumCircuit
         if (qubits.Length == 0)
         {
             // Perform a measurement by sampling from the current state vector probabilities
-            var result = QuantumMath.SampleMeasurement(StateVector);
+            var result = QuantumMath.SampleMeasurement(StateVector, RandomSource);
     
             // Collapse the quantum state to the measured state (collapse the superposition)
             StateVector = QuantumMath.CollapseToState(StateVector, result);
@@ -106,7 +113,7 @@ public class QuantumCircuit
             return Convert.ToString(result, 2).PadLeft(QubitCount, '0');
         }
         
-        var partialResult = QuantumMath.SamplePartialMeasurement(StateVector, qubits);
+        var partialResult = QuantumMath.SamplePartialMeasurement(StateVector, qubits, RandomSource);
         StateVector = QuantumMath.CollapseToPartialMeasurement(StateVector, qubits, partialResult);
             
         return Convert.ToString(partialResult, 2).PadLeft(qubits.Length, '0');
