@@ -102,6 +102,7 @@ public class QuantumCircuit
         
         Gates.Add(measure);
         
+        // If measuring all qubits, use much more efficient method
         if (qubits.Length == 0)
         {
             // Perform a measurement by sampling from the current state vector probabilities

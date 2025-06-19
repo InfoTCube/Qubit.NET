@@ -17,9 +17,11 @@ internal static class QuantumMath
     /// <returns>The updated quantum state vector.</returns>
     internal static Complex[] ApplySingleQubitGate(Complex[] state, Complex[,] gate, int targetQubit)
     {
-        int n = (int)System.Math.Log2(state.Length);
-        if (state.Length != 1 << n)
+        if (BitOperations.PopCount((uint)state.Length) != 1)
             throw new ArgumentException("State vector length must be a power of 2.");
+        
+        if (gate.GetLength(0) != 2 || gate.GetLength(1) != 2)
+            throw new ArgumentException("Single qubit gate must be a 2x2 matrix.");
     
         Complex[] newState = new Complex[state.Length];
 
@@ -120,7 +122,7 @@ internal static class QuantumMath
     }
     
     /// <summary>
-    /// Samples a measurement from the quantum state vector for a multi-qubit system.
+    /// Samples a measurement from the quantum state vector for a multi-qubit system. More efficient then partial measurment
     /// </summary>
     /// <param name="state">The current quantum state vector.</param>
     /// <param name="rand">Source of random numbers, can be psuedo, true random or custom.</param>
@@ -196,26 +198,37 @@ internal static class QuantumMath
         double[] outcomeProbabilities = new double[outcomeCount];
         double totalProbability = 0.0;
 
+        // Precompute bit shifts for each measured qubit (bit order: highest index -> lowest)
+        int[] bitShifts = new int[measuredQubits.Length];
+        for (int j = 0; j < measuredQubits.Length; j++)
+        {
+            bitShifts[j] = measuredQubits.Length - 1 - j;
+        }
+
         for (int i = 0; i < state.Length; i++)
         {
             int partialMeasurement = 0;
             for (int bit = 0; bit < measuredQubits.Length; bit++)
             {
-                int qubitIndex = measuredQubits[bit];
-                int bitValue = (i >> qubitIndex) & 1;
-                partialMeasurement |= (bitValue << (measuredQubits.Length - 1 - bit));
+                // Extract bit value of qubit measuredQubits[bit] in index i
+                if (((i >> measuredQubits[bit]) & 1) != 0)
+                {
+                    partialMeasurement |= (1 << bitShifts[bit]);
+                }
             }
 
             double prob = state[i].Real * state[i].Real + state[i].Imaginary * state[i].Imaginary;
             outcomeProbabilities[partialMeasurement] += prob;
             totalProbability += prob;
         }
-        
+
+        // Normalize
         for (int i = 0; i < outcomeCount; i++)
         {
             outcomeProbabilities[i] /= totalProbability;
         }
-        
+
+        // Sample
         double randomValue = rand.NextDouble();
         double cumulative = 0.0;
 
