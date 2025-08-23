@@ -946,6 +946,34 @@ public class QuantumCircuit
         
         ApplyGate(matrix, qubits.Reverse().ToArray());
     }
+    
+    /// <summary>
+    /// Returns a dictionary mapping each basis state (as a bitstring) to its corresponding 
+    /// probability amplitude squared (i.e., the measurement probability).
+    /// 
+    /// The keys are binary strings representing computational basis states (e.g., "00", "11"),
+    /// and the values are real numbers in [0, 1], summing to ~1 (within numerical precision).
+    /// Only basis states with non-negligible probabilities (greater than 1e-12) are included.
+    /// </summary>
+    /// <returns>
+    /// A dictionary where keys are basis states (bitstrings) and values are their probabilities.
+    /// </returns>
+    public Dictionary<string, double> GetProbabilities()
+    {
+        var result = new Dictionary<string, double>();
+
+        for (int i = 0; i < StateVector.Length; i++)
+        {
+            double prob = StateVector[i].Magnitude * StateVector[i].Magnitude;
+            if (prob > 1e-12) // ignore near-zero probabilities
+            {
+                string bitstring = Convert.ToString(i, 2).PadLeft(QubitCount, '0');
+                result[bitstring] = prob;
+            }
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Converts a quantum state vector represented as an array of complex numbers into a string representation.
