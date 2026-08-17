@@ -398,36 +398,6 @@ Memory is the real limit — the state vector holds 2ⁿ complex amplitudes at 1
 
 ---
 
-## 🚢 Releasing
-
-Publishing uses [NuGet Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing),
-so no long-lived API key is stored anywhere. The workflow exchanges a GitHub OIDC token for
-a key that expires after an hour.
-
-One-time setup:
-
-1. On nuget.org: **your username → Trusted Publishing → add a policy**
-   - Repository Owner: `InfoTCube`
-   - Repository: `Qubit.NET`
-   - Workflow File: `release.yml` *(file name only, no path)*
-   - Environment: leave empty
-2. In GitHub repo settings, add a secret `NUGET_USER` holding your nuget.org **username**
-   (the profile name, not your email).
-
-To release:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The workflow builds all three target frameworks, runs the tests, packs, and pushes.
-
-> A new policy on a repository that nuget.org has not seen publish before is *temporarily
-> active for 7 days*. The first successful publish locks it to the repository permanently.
-
----
-
 ## 💡 Contributions
 
 Pull requests, suggestions, and feature requests are welcome!  
