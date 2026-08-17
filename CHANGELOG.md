@@ -18,6 +18,8 @@ and usable from Unity.
 - `QuantumGates.Format(matrix)` — the string-returning counterpart of `Print`.
 - `QuantumCircuit.MaxQubitCount` constant.
 - Continuous integration and a tag-driven NuGet release workflow.
+- An xUnit test suite covering gate algebra, the textbook Bell and GHZ states, measurement
+  statistics and collapse, circuit rendering, and a regression test for every bug below.
 - XML documentation for every public gate matrix and for the `State` enum.
 
 ### Changed
