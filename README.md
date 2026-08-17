@@ -236,6 +236,31 @@ QuantumCircuit qc = new QuantumCircuit(2);
 qc.RandomSource = new FixedRandomSource();
 ```
 
+## ⚡ Performance
+
+Gates are applied in place, so a circuit allocates one state vector regardless of how many
+gates you apply, and gate application is parallelized above ~16 qubits.
+
+| Circuit                    | 16 qubits | 20 qubits | 22 qubits |
+|----------------------------|----------:|----------:|----------:|
+| Hadamard on every qubit    |    2.4 ms |     36 ms |    147 ms |
+| GHZ (H + CNOT chain)       |    2.3 ms |     34 ms |    142 ms |
+| Measure all qubits         |    2.7 ms |     44 ms |    188 ms |
+
+<sub>BenchmarkDotNet, .NET 10, Ryzen desktop. Reproduce with
+`dotnet run -c Release --project benchmarks/Qubit.NET.Benchmarks`.</sub>
+
+Memory is the real limit — the state vector holds 2ⁿ complex amplitudes at 16 bytes each:
+
+| Qubits | State vector |
+|-------:|-------------:|
+|     16 |         1 MB |
+|     20 |        16 MB |
+|     24 |       256 MB |
+|     26 |    1 GB (max) |
+
+---
+
 ## 📌 Future Roadmap
 
 - [ ] Entanglement entropy measurements

@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
@@ -20,6 +20,10 @@ public class QuantumCircuit
     /// <summary>
     /// State vector representing the current quantum state.
     /// </summary>
+    /// <remarks>
+    /// Single-qubit gates are applied in place, so a reference kept across a gate call may
+    /// observe the updated amplitudes rather than a snapshot. Clone it if you need one.
+    /// </remarks>
     public Complex[] StateVector { get; private set; }
 
     /// <summary>
@@ -217,21 +221,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void I(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate iGate = new Gate
-        {
-            GateType = GateType.I,
-            Matrix = QuantumGates.I,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(iGate);
-        
-        ApplyGate(QuantumGates.I, qubit);
-    }
+    public void I(int qubit) =>
+        ApplySingle(GateType.I, QuantumGates.I, qubit);
     
     /// <summary>
     /// Applies the Hadamard gate (H) to the specified qubit.
@@ -241,21 +232,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void H(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate hGate = new Gate
-        {
-            GateType = GateType.H,
-            Matrix = QuantumGates.H,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(hGate);
-        
-        ApplyGate(QuantumGates.H, qubit);
-    }
+    public void H(int qubit) =>
+        ApplySingle(GateType.H, QuantumGates.H, qubit);
 
     /// <summary>
     /// Applies the Pauli-X gate (X) to the specified qubit.
@@ -265,21 +243,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void X(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate xGate = new Gate
-        {
-            GateType = GateType.X,
-            Matrix = QuantumGates.X,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(xGate);
-        
-        ApplyGate(QuantumGates.X, qubit);
-    }
+    public void X(int qubit) =>
+        ApplySingle(GateType.X, QuantumGates.X, qubit);
 
     /// <summary>
     /// Applies the Pauli-Y gate (Y) to the specified qubit.
@@ -289,21 +254,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void Y(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate yGate = new Gate
-        {
-            GateType = GateType.Y,
-            Matrix = QuantumGates.Y,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(yGate);
-        
-        ApplyGate(QuantumGates.Y, qubit);
-    }
+    public void Y(int qubit) =>
+        ApplySingle(GateType.Y, QuantumGates.Y, qubit);
 
     /// <summary>
     /// Applies the Pauli-Z gate (Z) to the specified qubit.
@@ -313,21 +265,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void Z(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate zGate = new Gate
-        {
-            GateType = GateType.Z,
-            Matrix = QuantumGates.Z,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(zGate);
-        
-        ApplyGate(QuantumGates.Z, qubit);
-    }
+    public void Z(int qubit) =>
+        ApplySingle(GateType.Z, QuantumGates.Z, qubit);
 
     /// <summary>
     /// Applies the S gate (phase gate) to the specified qubit.
@@ -337,21 +276,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void S(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate sGate = new Gate
-        {
-            GateType = GateType.S,
-            Matrix = QuantumGates.S,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(sGate);
-        
-        ApplyGate(QuantumGates.S, qubit);
-    }
+    public void S(int qubit) =>
+        ApplySingle(GateType.S, QuantumGates.S, qubit);
 
     /// <summary>
     /// Applies the S† gate (inverse phase gate) to the specified qubit.
@@ -362,21 +288,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void Sdag(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate sDagGate = new Gate
-        {
-            GateType = GateType.Sdag,
-            Matrix = QuantumGates.Sdag,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(sDagGate);
-        
-        ApplyGate(QuantumGates.Sdag, qubit);
-    }
+    public void Sdag(int qubit) =>
+        ApplySingle(GateType.Sdag, QuantumGates.Sdag, qubit);
 
     /// <summary>
     /// Applies the T gate (π/4 phase gate) to the specified qubit.
@@ -386,21 +299,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void T(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate tGate = new Gate
-        {
-            GateType = GateType.T,
-            Matrix = QuantumGates.T,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(tGate);
-        
-        ApplyGate(QuantumGates.T, qubit);
-    }
+    public void T(int qubit) =>
+        ApplySingle(GateType.T, QuantumGates.T, qubit);
 
     /// <summary>
     /// Applies the T† gate (inverse of the T gate) to the specified qubit.
@@ -411,21 +311,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void Tdag(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate tDagGate = new Gate
-        {
-            GateType = GateType.Tdag,
-            Matrix = QuantumGates.Tdag,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(tDagGate);
-        
-        ApplyGate(QuantumGates.Tdag, qubit);
-    }
+    public void Tdag(int qubit) =>
+        ApplySingle(GateType.Tdag, QuantumGates.Tdag, qubit);
     
     /// <summary>
     /// Applies the Rx gate to the specified qubit.
@@ -437,21 +324,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
     /// </exception>
-    public void Rx(int qubit, double theta)
-    {
-        CheckQubit(qubit);
-        
-        Gate rxGate = new Gate
-        {
-            GateType = GateType.Rx,
-            Matrix = QuantumGates.Rx(theta),
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(rxGate);
-        
-        ApplyGate(QuantumGates.Rx(theta), qubit);
-    }
+    public void Rx(int qubit, double theta) =>
+        ApplySingle(GateType.Rx, QuantumGates.Rx(theta), qubit);
     
     /// <summary>
     /// Applies the Ry gate to the specified qubit.
@@ -463,21 +337,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
     /// </exception>
-    public void Ry(int qubit, double theta)
-    {
-        CheckQubit(qubit);
-        
-        Gate ryGate = new Gate
-        {
-            GateType = GateType.Ry,
-            Matrix = QuantumGates.Ry(theta),
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(ryGate);
-        
-        ApplyGate(QuantumGates.Ry(theta), qubit);
-    }
+    public void Ry(int qubit, double theta) =>
+        ApplySingle(GateType.Ry, QuantumGates.Ry(theta), qubit);
 
     /// <summary>
     /// Applies the Rz gate to the specified qubit.
@@ -489,21 +350,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
     /// </exception>
-    public void Rz(int qubit, double theta)
-    {
-        CheckQubit(qubit);
-        
-        Gate rzGate = new Gate
-        {
-            GateType = GateType.Rz,
-            Matrix = QuantumGates.Rz(theta),
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(rzGate);
-        
-        ApplyGate(QuantumGates.Rz(theta), qubit);
-    }
+    public void Rz(int qubit, double theta) =>
+        ApplySingle(GateType.Rz, QuantumGates.Rz(theta), qubit);
     
     /// <summary>
     /// Applies the square-root of Pauli-X gate (SX) to the specified qubit.
@@ -515,21 +363,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void SX(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate sxGate = new Gate
-        {
-            GateType = GateType.SX,
-            Matrix = QuantumGates.SX,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(sxGate);
-        
-        ApplyGate(QuantumGates.SX, qubit);
-    }
+    public void SX(int qubit) =>
+        ApplySingle(GateType.SX, QuantumGates.SX, qubit);
     
     /// <summary>
     /// Applies the square-root of Pauli-Y gate (SY) to the specified qubit.
@@ -541,21 +376,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void SY(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate syGate = new Gate
-        {
-            GateType = GateType.SY,
-            Matrix = QuantumGates.SY,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(syGate);
-        
-        ApplyGate(QuantumGates.SY, qubit);
-    }
+    public void SY(int qubit) =>
+        ApplySingle(GateType.SY, QuantumGates.SY, qubit);
     
     /// <summary>
     /// Applies the square-root of Pauli-Z gate (SZ), also known as the S gate, to the specified qubit.
@@ -567,21 +389,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
     /// </exception>
-    public void SZ(int qubit)
-    {
-        CheckQubit(qubit);
-        
-        Gate syGate = new Gate
-        {
-            GateType = GateType.SZ,
-            Matrix = QuantumGates.SZ,
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(syGate);
-        
-        ApplyGate(QuantumGates.SZ, qubit);
-    }
+    public void SZ(int qubit) =>
+        ApplySingle(GateType.SZ, QuantumGates.SZ, qubit);
     
     /// <summary>
     /// Applies the U3 gate to the specified qubit.
@@ -596,21 +405,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range, indicating that the specified qubit does not exist in the system.
     /// </exception>
-    public void U3(int qubit, double theta, double phi, double lambda)
-    {
-        CheckQubit(qubit);
-        
-        Gate u3Gate = new Gate
-        {
-            GateType = GateType.U3,
-            Matrix = QuantumGates.U3(theta, phi, lambda),
-            TargetQubits = [qubit]
-        };
-        
-        Gates.Add(u3Gate);
-        
-        ApplyGate(QuantumGates.U3(theta, phi, lambda), qubit);
-    }
+    public void U3(int qubit, double theta, double phi, double lambda) =>
+        ApplySingle(GateType.U3, QuantumGates.U3(theta, phi, lambda), qubit);
     
     /// <summary>
     /// Applies the CNOT (also called CX) gate (Controlled-NOT) to the specified qubits.
@@ -621,23 +417,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CNOT(int controlQubit, int targetQubit)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate cnotGate = new Gate
-        {
-            GateType = GateType.CNOT,
-            Matrix = QuantumGates.CNOT,
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(cnotGate);
-        
-        ApplyGate(QuantumGates.CNOT, [targetQubit, controlQubit]);
-    }
+    public void CNOT(int controlQubit, int targetQubit) =>
+        ApplyControlled(GateType.CNOT, QuantumGates.CNOT, targetQubit, controlQubit);
 
     /// <summary>
     /// Applies the CY gate (Controlled-Y) to the specified qubits.
@@ -648,23 +429,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CY(int controlQubit, int targetQubit)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate cyGate = new Gate
-        {
-            GateType = GateType.CY,
-            Matrix = QuantumGates.CY,
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(cyGate);
-        
-        ApplyGate(QuantumGates.CY, [targetQubit, controlQubit]);
-    }
+    public void CY(int controlQubit, int targetQubit) =>
+        ApplyControlled(GateType.CY, QuantumGates.CY, targetQubit, controlQubit);
 
     /// <summary>
     /// Applies the CZ gate (Controlled-Z) to the specified qubits.
@@ -675,23 +441,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CZ(int controlQubit, int targetQubit)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate czGate = new Gate
-        {
-            GateType = GateType.CZ,
-            Matrix = QuantumGates.CZ,
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(czGate);
-        
-        ApplyGate(QuantumGates.CZ, [targetQubit, controlQubit]);
-    }
+    public void CZ(int controlQubit, int targetQubit) =>
+        ApplyControlled(GateType.CZ, QuantumGates.CZ, targetQubit, controlQubit);
 
     /// <summary>
     /// Applies the CH gate (Controlled-Hadamard) to the specified qubits.
@@ -702,23 +453,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CH(int controlQubit, int targetQubit)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate chGate = new Gate
-        {
-            GateType = GateType.CH,
-            Matrix = QuantumGates.CH,
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(chGate);
-        
-        ApplyGate(QuantumGates.CH, [targetQubit, controlQubit]);
-    }
+    public void CH(int controlQubit, int targetQubit) =>
+        ApplyControlled(GateType.CH, QuantumGates.CH, targetQubit, controlQubit);
     
     /// <summary>
     /// Applies the CRx gate (Controlled-Rx) to the specified qubits.
@@ -730,23 +466,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CRx(int controlQubit, int targetQubit, double theta)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate crxGate = new Gate
-        {
-            GateType = GateType.CRx,
-            Matrix = QuantumGates.CRx(theta),
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(crxGate);
-        
-        ApplyGate(QuantumGates.CRx(theta), [targetQubit, controlQubit]);
-    }
+    public void CRx(int controlQubit, int targetQubit, double theta) =>
+        ApplyControlled(GateType.CRx, QuantumGates.CRx(theta), targetQubit, controlQubit);
     
     /// <summary>
     /// Applies the CRy gate (Controlled-Ry) to the specified qubits.
@@ -758,23 +479,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CRy(int controlQubit, int targetQubit, double theta)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate cryGate = new Gate
-        {
-            GateType = GateType.CRy,
-            Matrix = QuantumGates.CRy(theta),
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(cryGate);
-        
-        ApplyGate(QuantumGates.CRy(theta), [targetQubit, controlQubit]);
-    }
+    public void CRy(int controlQubit, int targetQubit, double theta) =>
+        ApplyControlled(GateType.CRy, QuantumGates.CRy(theta), targetQubit, controlQubit);
     
     /// <summary>
     /// Applies the CRz gate (Controlled-Rz) to the specified qubits.
@@ -786,23 +492,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CRz(int controlQubit, int targetQubit, double theta)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate crzGate = new Gate
-        {
-            GateType = GateType.CRz,
-            Matrix = QuantumGates.CRz(theta),
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(crzGate);
-        
-        ApplyGate(QuantumGates.CRz(theta), [targetQubit, controlQubit]);
-    }
+    public void CRz(int controlQubit, int targetQubit, double theta) =>
+        ApplyControlled(GateType.CRz, QuantumGates.CRz(theta), targetQubit, controlQubit);
     
     /// <summary>
     /// Applies the CU3 gate to the specified qubits.
@@ -816,23 +507,8 @@ public class QuantumCircuit
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if any of the qubit indices are out of range.
     /// </exception>
-    public void CU3(int controlQubit, int targetQubit, double theta, double phi, double lambda)
-    {
-        CheckQubit(controlQubit);
-        CheckQubit(targetQubit);
-        
-        Gate cu3Gate = new Gate
-        {
-            GateType = GateType.CU3,
-            Matrix = QuantumGates.CU3(theta, phi, lambda),
-            TargetQubits = [targetQubit],
-            ControlQubits = [controlQubit]
-        };
-        
-        Gates.Add(cu3Gate);
-        
-        ApplyGate(QuantumGates.CU3(theta, phi, lambda), [targetQubit, controlQubit]);
-    }
+    public void CU3(int controlQubit, int targetQubit, double theta, double phi, double lambda) =>
+        ApplyControlled(GateType.CU3, QuantumGates.CU3(theta, phi, lambda), targetQubit, controlQubit);
 
     /// <summary>
     /// Applies the SWAP gate to the specified qubits, exchanging their states.
@@ -875,6 +551,8 @@ public class QuantumCircuit
         CheckQubit(secondControlQubit);
         CheckQubit(targetQubit);
         
+        CheckIfDifferentQubits([firstControlQubit, secondControlQubit, targetQubit]);
+
         Gate toffoliGate = new Gate
         {
             GateType = GateType.Toffoli,
@@ -882,10 +560,16 @@ public class QuantumCircuit
             TargetQubits = [targetQubit],
             ControlQubits = [secondControlQubit, firstControlQubit]
         };
-        
+
         Gates.Add(toffoliGate);
-        
-        ApplyGate(QuantumGates.Toffoli, [targetQubit, firstControlQubit, secondControlQubit]);
+
+        StateVector = QuantumMath.ApplyControlledSingleQubitGate(
+            StateVector, QuantumMath.ControlledCore(QuantumGates.Toffoli),
+            targetQubit, firstControlQubit, secondControlQubit);
+
+        _isQubitModified[targetQubit] = true;
+        _isQubitModified[firstControlQubit] = true;
+        _isQubitModified[secondControlQubit] = true;
     }
 
     /// <summary>
@@ -1028,6 +712,58 @@ public class QuantumCircuit
         return sb.ToString();
     }
     
+    /// <summary>
+    /// Validates, records and applies a single-qubit gate. Shared by every one-qubit
+    /// gate method, which are otherwise identical apart from their type and matrix.
+    /// </summary>
+    /// <param name="type">The gate type, recorded for replay and for drawing.</param>
+    /// <param name="matrix">The 2x2 unitary matrix representing the gate.</param>
+    /// <param name="qubit">The index of the qubit to apply the gate to.</param>
+    private void ApplySingle(GateType type, Complex[,] matrix, int qubit)
+    {
+        CheckQubit(qubit);
+
+        Gates.Add(new Gate
+        {
+            GateType = type,
+            Matrix = matrix,
+            TargetQubits = [qubit]
+        });
+
+        ApplyGate(matrix, qubit);
+    }
+
+    /// <summary>
+    /// Validates, records and applies a two-qubit controlled gate. Shared by every
+    /// controlled gate method.
+    /// </summary>
+    /// <param name="type">The gate type, recorded for replay and for drawing.</param>
+    /// <param name="matrix">The 4x4 unitary matrix representing the gate.</param>
+    /// <param name="targetQubit">The index of the target qubit.</param>
+    /// <param name="controlQubit">The index of the control qubit.</param>
+    private void ApplyControlled(GateType type, Complex[,] matrix, int targetQubit, int controlQubit)
+    {
+        CheckQubit(controlQubit);
+        CheckQubit(targetQubit);
+
+        if (targetQubit == controlQubit)
+            throw new ArgumentException("Every gate argument must be a different Qubit");
+
+        Gates.Add(new Gate
+        {
+            GateType = type,
+            Matrix = matrix,
+            TargetQubits = [targetQubit],
+            ControlQubits = [controlQubit]
+        });
+
+        StateVector = QuantumMath.ApplyControlledSingleQubitGate(
+            StateVector, QuantumMath.ControlledCore(matrix), targetQubit, controlQubit);
+
+        _isQubitModified[targetQubit] = true;
+        _isQubitModified[controlQubit] = true;
+    }
+
     /// <summary>
     /// Applies a single-qubit gate given by a unitary matrix to the specified qubit.
     /// </summary>

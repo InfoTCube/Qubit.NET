@@ -124,32 +124,39 @@ public static class Simulator
     /// <param name="gateType">The type of gate being applied.</param>
     private static Complex[] ApplyGate(Complex[] stateVector, Gate currentGate, GateType gateType)
     {
+        // Measure gates are handled by the caller and never reach here, so every gate at
+        // this point must carry a matrix.
+        Complex[,] matrix = currentGate.Matrix
+                            ?? throw new InvalidOperationException($"Gate {gateType} has no matrix.");
+
         switch (gateType)
         {
             case GateType.I or GateType.H or GateType.X or GateType.Y or GateType.Z or GateType.S or GateType.Sdag 
                 or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz or GateType.SX 
                 or GateType.SY or GateType.SZ or GateType.U3:
-                stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
+                stateVector = QuantumMath.ApplySingleQubitGate(stateVector, matrix, currentGate.TargetQubits[0]);
                 break;
-            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy 
+            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy
                 or GateType.CRz or GateType.CU3:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix, 
-                    [currentGate.TargetQubits.First(), currentGate.ControlQubits.First()]);
+                stateVector = QuantumMath.ApplyControlledSingleQubitGate(stateVector,
+                    QuantumMath.ControlledCore(matrix),
+                    currentGate.TargetQubits[0], currentGate.ControlQubits[0]);
                 break;
             case GateType.SWAP:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    currentGate.TargetQubits.ToArray());
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, matrix,
+                    currentGate.TargetQubits);
                 break;
             case GateType.Toffoli:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    [currentGate.TargetQubits.First(), currentGate.ControlQubits[0], currentGate.ControlQubits[1]]);
+                stateVector = QuantumMath.ApplyControlledSingleQubitGate(stateVector,
+                    QuantumMath.ControlledCore(matrix),
+                    currentGate.TargetQubits[0], currentGate.ControlQubits[0], currentGate.ControlQubits[1]);
                 break;
             case GateType.Fredkin:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    [currentGate.TargetQubits[1], currentGate.TargetQubits[0], currentGate.ControlQubits.First()]);
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, matrix,
+                    [currentGate.TargetQubits[1], currentGate.TargetQubits[0], currentGate.ControlQubits[0]]);
                 break;
             case GateType.Custom:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, matrix,
                     Enumerable.Reverse(currentGate.TargetQubits).ToArray());
                 break;
         }

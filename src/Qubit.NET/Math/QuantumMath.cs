@@ -17,6 +17,12 @@ internal static class QuantumMath
     internal const double Tolerance = 1e-9;
 
     /// <summary>
+    /// State vector length from which gate application is parallelized. Below this the
+    /// thread pool overhead outweighs the work, so roughly 16 qubits.
+    /// </summary>
+    private const int ParallelThreshold = 1 << 16;
+
+    /// <summary>
     /// Applies a single-qubit gate to a specific qubit in a multi-qubit state vector.
     /// </summary>
     /// <param name="gate">The 2x2 gate matrix.</param>
@@ -32,27 +38,122 @@ internal static class QuantumMath
         
         if (gate.GetLength(0) != 2 || gate.GetLength(1) != 2)
             throw new ArgumentException("Single qubit gate must be a 2x2 matrix.");
-    
-        Complex[] newState = new Complex[state.Length];
+
+        // Applied in place. Each amplitude pair (i, i ^ bit) is touched exactly once, from
+        // the member of the pair whose target bit is 0, so no scratch vector is needed.
+        // At 24 qubits a copy would allocate 256 MB per gate.
+        Complex g00 = gate[0, 0], g01 = gate[0, 1], g10 = gate[1, 0], g11 = gate[1, 1];
+        int bitMask = 1 << targetQubit;
+
+        // Below the threshold the thread pool costs more than the work itself.
+        if (state.Length >= ParallelThreshold)
+        {
+            Parallel.For(0, state.Length, i =>
+            {
+                if ((i & bitMask) != 0) return;
+
+                int flipped = i | bitMask;
+                Complex a = state[i];
+                Complex b = state[flipped];
+
+                state[i] = g00 * a + g01 * b;
+                state[flipped] = g10 * a + g11 * b;
+            });
+
+            return state;
+        }
 
         for (int i = 0; i < state.Length; i++)
         {
-            int bit = (i >> targetQubit) & 1;
-            int flippedIndex = i ^ (1 << targetQubit);
-            
-            if (bit == 0)
-            {
-                Complex a = state[i];
-                Complex b = state[flippedIndex];
+            if ((i & bitMask) != 0) continue;
 
-                newState[i] += gate[0, 0] * a + gate[0, 1] * b;
-                newState[flippedIndex] += gate[1, 0] * a + gate[1, 1] * b;
-            }
+            int flipped = i | bitMask;
+            Complex a = state[i];
+            Complex b = state[flipped];
+
+            state[i] = g00 * a + g01 * b;
+            state[flipped] = g10 * a + g11 * b;
         }
-        
-        return newState;
+
+        return state;
     }
     
+    /// <summary>
+    /// Extracts the 2x2 operator that a controlled gate applies to its target.
+    /// </summary>
+    /// <param name="gate">
+    /// A controlled gate matrix, which by construction is the identity everywhere except
+    /// its trailing 2x2 block.
+    /// </param>
+    /// <returns>The 2x2 operator applied when every control qubit is set.</returns>
+    internal static Complex[,] ControlledCore(Complex[,] gate)
+    {
+        int n = gate.GetLength(0);
+
+        return new[,]
+        {
+            { gate[n - 2, n - 2], gate[n - 2, n - 1] },
+            { gate[n - 1, n - 2], gate[n - 1, n - 1] }
+        };
+    }
+
+    /// <summary>
+    /// Applies a single-qubit operator to a target qubit, but only on the basis states where
+    /// every control qubit is set. Covers CNOT, CZ, CH, the controlled rotations and Toffoli.
+    /// </summary>
+    /// <param name="state">The current full quantum state vector, modified in place.</param>
+    /// <param name="gate">The 2x2 operator to apply to the target.</param>
+    /// <param name="targetQubit">The index of the target qubit.</param>
+    /// <param name="controlQubits">The indices of the control qubits.</param>
+    /// <returns>The updated quantum state vector.</returns>
+    /// <remarks>
+    /// The general <see cref="ApplyMultiQubitGate"/> path allocates a fresh state vector per
+    /// gate. Controlled gates are the common case in real circuits, and they decompose into
+    /// an in-place pass, so they get their own route.
+    /// </remarks>
+    internal static Complex[] ApplyControlledSingleQubitGate(Complex[] state, Complex[,] gate,
+        int targetQubit, params int[] controlQubits)
+    {
+        Complex g00 = gate[0, 0], g01 = gate[0, 1], g10 = gate[1, 0], g11 = gate[1, 1];
+
+        int targetMask = 1 << targetQubit;
+
+        int controlMask = 0;
+        foreach (int control in controlQubits)
+            controlMask |= 1 << control;
+
+        if (state.Length >= ParallelThreshold)
+        {
+            Parallel.For(0, state.Length, i =>
+            {
+                if ((i & targetMask) != 0 || (i & controlMask) != controlMask) return;
+
+                int flipped = i | targetMask;
+                Complex a = state[i];
+                Complex b = state[flipped];
+
+                state[i] = g00 * a + g01 * b;
+                state[flipped] = g10 * a + g11 * b;
+            });
+
+            return state;
+        }
+
+        for (int i = 0; i < state.Length; i++)
+        {
+            if ((i & targetMask) != 0 || (i & controlMask) != controlMask) continue;
+
+            int flipped = i | targetMask;
+            Complex a = state[i];
+            Complex b = state[flipped];
+
+            state[i] = g00 * a + g01 * b;
+            state[flipped] = g10 * a + g11 * b;
+        }
+
+        return state;
+    }
+
     /// <summary>
     /// Applies a multi-qubit gate to a subset of qubits in a multi-qubit state vector.
     /// </summary>
@@ -64,35 +165,52 @@ internal static class QuantumMath
     {
         Complex[] newState = new Complex[state.Length]; // Initialize to zeros
 
+        int targetCount = targetQubits.Length;
+        int outcomes = 1 << targetCount;
+
+        // Precompute each target's bit mask once. The previous version called
+        // Array.IndexOf inside the per-basis-state loop, turning an O(2^n * 2^k) pass into
+        // O(2^n * k^2 + 2^n * 2^k).
+        int[] masks = new int[targetCount];
+        for (int k = 0; k < targetCount; k++)
+            masks[k] = 1 << targetQubits[k];
+
         // Iterate through each basis state
         for (int i = 0; i < state.Length; i++)
         {
+            Complex amplitude = state[i];
+
+            if (amplitude == Complex.Zero) continue;
+
             // Extract the values of target qubits (as bits)
             int targetBits = 0;
-            foreach (int qubit in targetQubits)
+            for (int k = 0; k < targetCount; k++)
             {
-                targetBits |= ((i >> qubit) & 1) << Array.IndexOf(targetQubits, qubit);
+                if ((i & masks[k]) != 0)
+                    targetBits |= 1 << k;
             }
 
+            // Clearing the target bits once means each destination index is a plain OR.
+            int baseIndex = i;
+            for (int k = 0; k < targetCount; k++)
+                baseIndex &= ~masks[k];
+
             // Apply gate operation to this basis state
-            for (int j = 0; j < (1 << targetQubits.Length); j++)
+            for (int j = 0; j < outcomes; j++)
             {
+                Complex coefficient = gate[j, targetBits];
+
+                if (coefficient == Complex.Zero) continue;
+
                 // Create the new basis state index
-                int newIndex = i;
-                for (int k = 0; k < targetQubits.Length; k++)
+                int newIndex = baseIndex;
+                for (int k = 0; k < targetCount; k++)
                 {
-                    int currentBit = (j >> k) & 1;
-                    int oldBit = (i >> targetQubits[k]) & 1;
-                    if (currentBit != oldBit)
-                    {
-                        newIndex ^= (1 << targetQubits[k]);
-                    }
+                    if ((j & (1 << k)) != 0)
+                        newIndex |= masks[k];
                 }
 
-                // Apply the gate coefficient
-                int gateRow = j;
-                int gateCol = targetBits;
-                newState[newIndex] += gate[gateRow, gateCol] * state[i];
+                newState[newIndex] += coefficient * amplitude;
             }
         }
 

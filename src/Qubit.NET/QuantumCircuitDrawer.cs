@@ -115,15 +115,17 @@ public static class QuantumCircuitDrawer
         
         foreach (var gate in circuit.Gates)
         {
-            var controlQubits = gate.ControlQubits ?? Array.Empty<int>();
-            var targetQubits = gate.TargetQubits ?? Array.Empty<int>();
+            var controlQubits = gate.ControlQubits;
+            var targetQubits = gate.TargetQubits;
 
             string[] reps;
-            
+
+            // Measure and Custom span an arbitrary number of qubits, so their symbols are
+            // repeated to match rather than looked up in the fixed symbol table.
             if(gate.GateType == GateType.Measure)
-                reps = Enumerable.Repeat("M", gate.TargetQubits.Length).ToArray();
+                reps = Enumerable.Repeat("M", targetQubits.Length).ToArray();
             else if(gate.GateType == GateType.Custom)
-                reps = Enumerable.Repeat("C", gate.TargetQubits.Length).ToArray();
+                reps = Enumerable.Repeat("C", targetQubits.Length).ToArray();
             else
                 reps = Helpers.GateTypeToCharRepresentation(gate.GateType);
             
