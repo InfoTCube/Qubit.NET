@@ -4,23 +4,37 @@
 
 # 🧠 C# Quantum Computing Simulation Library
 
-**Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It allows users to simulate quantum circuits up to 30 qubits, initialize qubits, apply common quantum gates, and measure results — all using a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
+[![NuGet](https://img.shields.io/nuget/v/Qubit.NET.svg)](https://www.nuget.org/packages/Qubit.NET/)
+[![Downloads](https://img.shields.io/nuget/dt/Qubit.NET.svg)](https://www.nuget.org/packages/Qubit.NET/)
+[![CI](https://github.com/InfoTCube/Qubit.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/InfoTCube/Qubit.NET/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+**Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It lets you build quantum circuits, initialize qubits, apply common quantum gates, and measure results — all on a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
+
+The state vector holds 2ⁿ complex amplitudes, so memory is the limit: **20 qubits ≈ 16 MB, 24 ≈ 256 MB, 26 ≈ 1 GB** (the hard ceiling, set by the CLR's 2 GB single-array limit).
 
 ---
 
-### ✅ Requirements
-- .NET 6.0 or newer
-- `System.Numerics` (for complex numbers — included in .NET)
-
-### 📥 Setup
-Clone or download the repository:
+### 📥 Install
 
 ```bash
-git clone https://github.com/InfoTCube/Qubit.Net.git
-cd Qubit.NET
+dotnet add package Qubit.NET
 ```
 
-Add the project to your solution or include the `.cs` files (`QuantumCircuit.cs`, `QuantumGates.cs`, etc.) in your C# project.
+Zero dependencies. Targets **.NET Standard 2.1**, **.NET 8** and **.NET 10**.
+
+### 🎮 Unity
+
+Qubit.NET ships a `netstandard2.1` build, so it works in Unity 2021.2+. Either install it
+through [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity), or drop
+`lib/netstandard2.1/Qubit.NET.dll` from the package into `Assets/Plugins/`.
+
+Unity has no `Console`, so use the string-returning APIs:
+
+```csharp
+Debug.Log(qc.ToDiagram());                     // instead of qc.Draw()
+Debug.Log(QuantumGates.Format(QuantumGates.H)); // instead of QuantumGates.Print(...)
+```
 
 ---
 
@@ -45,6 +59,17 @@ qc.Draw();
 Console.WriteLine($"Measured: {qc.Measure()}"); // Possible: 00 or 11
 ```
 
+`Draw()` prints a colored ASCII diagram to the console — `ToDiagram()` returns the same
+thing as a string:
+
+```
+q2 (0): ───────────[+]──[X]──[M]─
+                    |    |    |
+q1 (0): ──────[+]───@────|───[M]─
+               |    |    |    |
+q0 (0): ─[H]───@────@───[X]──[M]─
+```
+
 ---
 
 ## 🧰 Features
@@ -62,11 +87,14 @@ You can initialize any qubit to one of the predefined basis states:
 qc.Initialize(0, State.Minus);
 ```
 
-or in any custom state
+or in any custom state, given as amplitudes α and β:
 
 ```csharp
-qc.Initialize(0, new Complex(1, 1), new Complex(2, 2));
+// |ψ⟩ = (|0⟩ + i|1⟩) / √2
+qc.Initialize(0, new Complex(1 / Math.Sqrt(2), 0), new Complex(0, 1 / Math.Sqrt(2)));
 ```
+
+> ⚠️ The state must be normalized — `|α|² + |β|² = 1` — or an `ArgumentException` is thrown.
 
 > ⚠️ Initialization can only be done **before any gate is applied** to that qubit.  
 > This is internally tracked using a private `_isQubitModified` array.
@@ -182,9 +210,58 @@ qc.H(0);
 qc.CNOT(0, 1);
 qc.Measure();
 
-string results = Simulator.Run(qc, 1000)[0].GetStringResult();
-Console.WriteLine(results);
+MeasurementResult result = Simulator.Run(qc, 1000)[0];
+
+Console.WriteLine(result);                    // {'00': 512, '11': 488}
+Console.WriteLine(result.Counts["00"]);       // 512
+Console.WriteLine(result.Probability("11"));  // 0.488
+Console.WriteLine(result.MostFrequent);       // 00
+Console.WriteLine(result.Shots);              // 1000
 ```
+
+`Simulator.Run` never modifies the circuit you hand it, so you can run the same circuit as
+many times as you like.
+
+---
+
+### 🔀 Classical bits and feedforward
+
+Measuring writes into a classical bit — one per qubit, so measuring qubit `q` fills bit `q`
+unless you say otherwise with `MeasureInto`. `When` then conditions later gates on that bit,
+which is what mid-circuit measurement and error correction need.
+
+```csharp
+qc.MeasureInto(qubit: 0, classicalBit: 0);
+qc.When(classicalBit: 0, value: 1, c => c.X(2));   // X(2) runs only if bit 0 came out 1
+```
+
+Conditional gates are always *recorded*, so `Simulator.Run` re-evaluates the condition on
+every shot against that shot's own outcomes.
+
+Quantum teleportation in full:
+
+```csharp
+var qc = new QuantumCircuit(3);
+
+qc.Ry(0, theta);        // the message on qubit 0
+
+qc.H(1);                // entangle qubits 1 and 2
+qc.CNOT(1, 2);
+
+qc.CNOT(0, 1);          // Bell-basis measurement of qubits 0 and 1
+qc.H(0);
+qc.MeasureInto(0, 0);
+qc.MeasureInto(1, 1);
+
+qc.When(1, 1, c => c.X(2));   // corrections
+qc.When(0, 1, c => c.Z(2));
+
+// qubit 2 now holds the state qubit 0 started in
+```
+
+> Qubit.NET deliberately has no separate `ClassicalRegister` type. The classical register in
+> Qiskit exists mainly to express feedforward and result layout; `When` and `MeasureInto`
+> cover both without making every circuit declare two registers up front.
 
 ---
 
@@ -208,11 +285,116 @@ QuantumCircuit qc = new QuantumCircuit(2);
 qc.RandomSource = new FixedRandomSource();
 ```
 
+### 🧪 Built-in algorithms
+
+```csharp
+using Qubit.NET.Circuits;
+
+// Grover search: finds the marked item in O(sqrt(N))
+var grover = Algorithms.Grover(2, c => c.CZ(0, 1));   // marks |11>
+Console.WriteLine(grover.ToHistogram());              // 11 | ####...####  1.000
+
+// Bernstein-Vazirani: recovers a hidden bit string in a single query
+var bv = Algorithms.BernsteinVazirani([true, false, true]);
+Console.WriteLine(bv.Measure(2, 1, 0));               // 101
+
+// Deutsch-Jozsa, teleportation, superdense coding, QFT
+var dj = Algorithms.DeutschJozsa(3, c => c.CNOT(0, 3));
+var tp = Algorithms.Teleportation(c => c.Ry(0, 0.9));
+var sd = Algorithms.SuperdenseCoding(true, false);
+
+qc.QFT();   // Quantum Fourier Transform, in place
+```
+
+Plus `BellStates.PhiPlus/PhiMinus/PsiPlus/PsiMinus/GHZ()`.
+
+---
+
+### 📤 OpenQASM export
+
+Export to OpenQASM 2.0 and run your circuit on real hardware through Qiskit or IBM Quantum:
+
+```csharp
+using Qubit.NET.Export;
+
+File.WriteAllText("teleport.qasm", Algorithms.Teleportation(c => c.Ry(0, 0.9)).ToQasm());
+```
+
+```qasm
+OPENQASM 2.0;
+include "qelib1.inc";
+
+qreg q[3];
+creg c[3];
+
+ry(0.9) q[0];
+h q[1];
+cx q[1],q[2];
+cx q[0],q[1];
+h q[0];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+if (c[1]==1) x q[2];
+if (c[0]==1) z q[2];
+```
+
+```python
+# Qiskit
+qc = QuantumCircuit.from_qasm_file("teleport.qasm")
+```
+
+---
+
+### 📊 Inspecting the state
+
+```csharp
+using Qubit.NET.Visualization;
+
+var (x, y, z) = qc.BlochVector(0);   // Bloch sphere coordinates — drive a Unity gizmo
+qc.QubitProbability(0);              // P(qubit 0 = |1>), tracing out the rest
+Console.WriteLine(qc.ToHistogram()); // ASCII bar chart of outcome probabilities
+```
+
+A qubit entangled with others sits inside the sphere — maximally entangled means the
+origin, which makes entanglement something you can actually *see*.
+
+---
+
+## ⚡ Performance
+
+Gates are applied in place, so a circuit allocates one state vector regardless of how many
+gates you apply, and gate application is parallelized above ~16 qubits.
+
+| Circuit                    | 16 qubits | 20 qubits | 22 qubits |
+|----------------------------|----------:|----------:|----------:|
+| Hadamard on every qubit    |    2.4 ms |     36 ms |    147 ms |
+| GHZ (H + CNOT chain)       |    2.3 ms |     34 ms |    142 ms |
+| Measure all qubits         |    2.7 ms |     44 ms |    188 ms |
+
+<sub>BenchmarkDotNet, .NET 10, Ryzen desktop. Reproduce with
+`dotnet run -c Release --project benchmarks/Qubit.NET.Benchmarks`.</sub>
+
+Memory is the real limit — the state vector holds 2ⁿ complex amplitudes at 16 bytes each:
+
+| Qubits | State vector |
+|-------:|-------------:|
+|     16 |         1 MB |
+|     20 |        16 MB |
+|     24 |       256 MB |
+|     26 |    1 GB (max) |
+
+---
+
 ## 📌 Future Roadmap
 
-- [ ] Entanglement entropy measurements
+- [x] Circuit export in QASM
+- [x] Mid-circuit measurement and classical feedforward
+- [x] Bloch sphere coordinates and probability histograms
+- [x] Built-in algorithms (Grover, Deutsch–Jozsa, Bernstein–Vazirani, QFT, teleportation)
 - [ ] Noise simulation (decoherence, damping)
-- [ ] Circuit export in QASM
+- [ ] Entanglement entropy measurements
+- [ ] QASM import
+- [ ] Multi-controlled gates and circuit inverses
 
 ---
 

@@ -19,13 +19,14 @@ public static class Simulator
     /// <param name="qc">The quantum circuit to simulate.</param>
     /// <param name="shots">The number of times the simulation should be run. Default is 1.</param>
     /// <returns>
-    /// A list of integer arrays and integers representing measurement results for each shot and number of qubits involved in measurement.
-    /// Each array contains counts of observed outcomes.
+    /// One <see cref="MeasurementResult"/> per measurement in the circuit, in the order the
+    /// measurements appear, each holding the outcome counts across all shots.
+    /// Empty if the circuit contains no measurement.
     /// </returns>
-    public static IList<(int[], int)> Run(QuantumCircuit qc, int shots = 1)
+    public static IList<MeasurementResult> Run(QuantumCircuit qc, int shots = 1)
     {
-        if (qc.Gates.All(g => g.GateType != GateType.Measure)) return new List<(int[], int)>();
-        
+        if (qc.Gates.All(g => g.GateType != GateType.Measure)) return new List<MeasurementResult>();
+
         Complex[] stateVector = new Complex[1 << qc.QubitCount];
         stateVector[0] = new Complex(1, 0);
 
@@ -34,79 +35,99 @@ public static class Simulator
             stateVector = QuantumMath.InitializeState(stateVector, init.QubitIndex, init.Alpha, init.Beta);
         }
 
-        GateType currentGateType = qc.Gates.First().GateType;
+        // Work on a local copy: Run must never mutate the circuit it is handed, or a
+        // second Run(qc, shots) would replay a circuit stripped of its own gates.
+        List<Gate> remainingGates = qc.Gates.ToList();
 
-        while (currentGateType != GateType.Measure && qc.Gates.Count != 0)
+        // Apply the deterministic prefix (everything before the first measurement) once,
+        // then replay only the rest per shot. A conditional gate depends on a measurement,
+        // so it can never appear in the prefix.
+        while (remainingGates.Count > 0 && remainingGates[0].GateType != GateType.Measure)
         {
-            Gate currentGate = qc.Gates.First();
-            
-            stateVector = ApplayGate(stateVector, currentGate, currentGateType);
+            Gate currentGate = remainingGates[0];
 
-            qc.Gates.RemoveAt(0);
-            
-            currentGateType = qc.Gates.Count > 0 ? qc.Gates.First().GateType : currentGateType;
+            stateVector = ApplyGate(stateVector, currentGate, currentGate.GateType);
+
+            remainingGates.RemoveAt(0);
         }
-        
-        IList<(int[], int)> results = new List<(int[], int)>();
-        
+
+        List<MeasurementResult> results = new();
+
+        // Classical bits are re-derived every shot, so feedforward follows that shot's own
+        // measurement outcomes.
+        int[] classicalBits = new int[qc.QubitCount];
+
         for (int i = 0; i < shots; i++)
         {
             Complex[] modStateVector = (Complex[])stateVector.Clone();
 
+            Array.Clear(classicalBits, 0, classicalBits.Length);
+
             int measurmentNumber = 0;
-            
-            foreach (var gate in qc.Gates)
+
+            foreach (var gate in remainingGates)
             {
+                if (gate.ConditionBit is { } bit && classicalBits[bit] != gate.ConditionValue)
+                    continue;
+
                 if (gate.GateType == GateType.Measure)
                 {
                     int num = MeasureState(ref modStateVector, gate.TargetQubits, qc);
-                    
-                    if (measurmentNumber + 1 > results.Count)
-                        results.Add((new int[1L << qc.QubitCount], gate.TargetQubits.Length));
 
-                    results[measurmentNumber].Item1[num]++;
+                    if (measurmentNumber + 1 > results.Count)
+                        results.Add(new MeasurementResult(
+                            new int[1 << gate.TargetQubits.Length], gate.TargetQubits.Length));
+
+                    results[measurmentNumber].Record(num);
+
+                    RecordClassicalBits(gate, num, classicalBits, qc.QubitCount);
 
                     measurmentNumber++;
                 }
                 else
                 {
-                    modStateVector = ApplayGate(modStateVector, gate, gate.GateType);
+                    modStateVector = ApplyGate(modStateVector, gate, gate.GateType);
                 }
             }
         }
-        
+
         return results;
+    }
+
+    /// <summary>
+    /// Writes a measurement outcome into the classical bits the gate targets.
+    /// </summary>
+    /// <param name="gate">The measurement gate.</param>
+    /// <param name="outcome">The packed measurement outcome.</param>
+    /// <param name="classicalBits">The classical register for the current shot.</param>
+    /// <param name="qubitCount">Number of qubits in the circuit.</param>
+    /// <remarks>
+    /// The two measurement paths pack their outcome differently: a full-register
+    /// measurement returns a basis index, where qubit q sits at bit q, while a partial
+    /// measurement packs the listed qubits with the first one most significant.
+    /// </remarks>
+    private static void RecordClassicalBits(Gate gate, int outcome, int[] classicalBits, int qubitCount)
+    {
+        int width = gate.TargetQubits.Length;
+        bool fullRegister = width == qubitCount;
+
+        for (int b = 0; b < gate.ClassicalBits.Length && b < width; b++)
+        {
+            int shift = fullRegister ? gate.TargetQubits[b] : width - 1 - b;
+
+            classicalBits[gate.ClassicalBits[b]] = (outcome >> shift) & 1;
+        }
     }
 
     /// <summary>
     /// Converts the result of a quantum circuit simulation into a human-readable string.
     /// </summary>
-    /// <param name="result">An array of measurement result counts and number of qubits in measurement.</param>
+    /// <param name="result">The measurement result to format.</param>
     /// <returns>
     /// A string formatted as a dictionary, where keys are binary representations of measurement outcomes,
     /// and values are the counts of how often each outcome occurred.
     /// </returns>
-    public static string GetStringResult(this (int[], int) result)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.Append("{");
-        for (int i = 0; i < result.Item1.Length; i++)
-        {
-            if(result.Item1[i] == 0)
-                continue;
-            
-            sb.Append("'");
-            sb.Append(Convert.ToString(i, 2).PadLeft(result.Item2, '0'));
-            sb.Append("': ");
-            sb.Append(result.Item1[i].ToString());
-            sb.Append(", ");
-        }
-        
-        sb.Remove(sb.Length - 2, 2);
-        sb.Append("}");
-        
-        return sb.ToString();
-    }
+    public static string GetStringResult(this MeasurementResult result) => result.ToString();
 
     /// <summary>
     /// Applies a quantum gate to the given state vector, modifying it according to the specified gate type.
@@ -115,35 +136,42 @@ public static class Simulator
     /// <param name="stateVector">The current quantum state vector.</param>
     /// <param name="currentGate">The gate to apply.</param>
     /// <param name="gateType">The type of gate being applied.</param>
-    private static Complex[] ApplayGate(Complex[] stateVector, Gate currentGate, GateType gateType)
+    private static Complex[] ApplyGate(Complex[] stateVector, Gate currentGate, GateType gateType)
     {
+        // Measure gates are handled by the caller and never reach here, so every gate at
+        // this point must carry a matrix.
+        Complex[,] matrix = currentGate.Matrix
+                            ?? throw new InvalidOperationException($"Gate {gateType} has no matrix.");
+
         switch (gateType)
         {
             case GateType.I or GateType.H or GateType.X or GateType.Y or GateType.Z or GateType.S or GateType.Sdag 
                 or GateType.T or GateType.Tdag or GateType.Rx or GateType.Ry or GateType.Rz or GateType.SX 
                 or GateType.SY or GateType.SZ or GateType.U3:
-                stateVector = QuantumMath.ApplySingleQubitGate(stateVector, currentGate.Matrix, currentGate.TargetQubits.First());
+                stateVector = QuantumMath.ApplySingleQubitGate(stateVector, matrix, currentGate.TargetQubits[0]);
                 break;
-            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy 
+            case GateType.CNOT or GateType.CY or GateType.CZ or GateType.CH or GateType.CRx or GateType.CRy
                 or GateType.CRz or GateType.CU3:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix, 
-                    [currentGate.TargetQubits.First(), currentGate.ControlQubits.First()]);
+                stateVector = QuantumMath.ApplyControlledSingleQubitGate(stateVector,
+                    QuantumMath.ControlledCore(matrix),
+                    currentGate.TargetQubits[0], currentGate.ControlQubits[0]);
                 break;
             case GateType.SWAP:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    currentGate.TargetQubits.ToArray());
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, matrix,
+                    currentGate.TargetQubits);
                 break;
             case GateType.Toffoli:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    [currentGate.TargetQubits.First(), currentGate.ControlQubits[0], currentGate.ControlQubits[1]]);
+                stateVector = QuantumMath.ApplyControlledSingleQubitGate(stateVector,
+                    QuantumMath.ControlledCore(matrix),
+                    currentGate.TargetQubits[0], currentGate.ControlQubits[0], currentGate.ControlQubits[1]);
                 break;
             case GateType.Fredkin:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    [currentGate.TargetQubits[1], currentGate.TargetQubits[0], currentGate.ControlQubits.First()]);
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, matrix,
+                    [currentGate.TargetQubits[1], currentGate.TargetQubits[0], currentGate.ControlQubits[0]]);
                 break;
             case GateType.Custom:
-                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    currentGate.TargetQubits.Reverse().ToArray());
+                stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, matrix,
+                    Enumerable.Reverse(currentGate.TargetQubits).ToArray());
                 break;
         }
 

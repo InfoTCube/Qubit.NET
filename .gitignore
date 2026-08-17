@@ -1,2 +1,6 @@
 .idea
 .vscode
+artifacts/
+bin/
+obj/
+BenchmarkDotNet.Artifacts/

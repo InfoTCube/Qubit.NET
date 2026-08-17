@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write   # required for NuGet trusted publishing (OIDC)
+      contents: write   # required to create the GitHub release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Source Link needs full history
+
+      # A v* tag can be pushed pointing at any commit on any branch, which would otherwise
+      # publish straight from a feature branch. Refuse anything not contained in main.
+      - name: Verify the tag is on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tag $GITHUB_REF_NAME points at a commit that is not on main. Refusing to publish."
+            exit 1
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Derive version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Build
+        run: dotnet build --configuration Release -p:Version=${{ env.VERSION }}
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release
+
+      - name: Pack
+        run: >
+          dotnet pack src/Qubit.NET/Qubit.NET.csproj --no-build --configuration Release
+          -p:Version=${{ env.VERSION }} --output ./artifacts
+
+      # Exchanges a GitHub OIDC token for a NuGet API key that lasts one hour, so no
+      # long-lived key is ever stored. Must run immediately before the push.
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet
+        run: >
+          dotnet nuget push "./artifacts/*.nupkg"
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/*.nupkg
+          generate_release_notes: true
