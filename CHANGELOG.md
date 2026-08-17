@@ -75,4 +75,8 @@ and usable from Unity.
   flags with the original, so gates applied to a copy also affected the source circuit.
 - Toffoli gates rendered their second control as a target marker in circuit diagrams.
 - `GetStringResult` threw an exception when every measurement count was zero.
+- State and matrix strings used the current culture's decimal separator and printed full
+  double precision, so `ToString()` returned `0,7071067811865475|00>` on a machine with a
+  comma separator. Output is now culture-invariant and rounded to four decimals, and
+  amplitudes that are numerical noise are no longer printed at all.
 - Renamed the internal `ApplayGate` to `ApplyGate`.

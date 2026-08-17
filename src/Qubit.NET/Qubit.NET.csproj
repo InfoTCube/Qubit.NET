@@ -19,7 +19,7 @@
     <PackageProjectUrl>https://github.com/InfoTCube/Qubit.NET</PackageProjectUrl>
     <RepositoryUrl>https://github.com/InfoTCube/Qubit.NET</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageIcon>qubitnet.png</PackageIcon>
+    <PackageIcon>qubitnet-icon-512.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>See CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
@@ -34,8 +34,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../img/qubitnet.png" Pack="true" PackagePath="/" Visible="false" />
-    <None Include="../../README.md" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="../../img/qubitnet-icon-512.png" Pack="true" PackagePath="/" Visible="false" />
+    <!-- A leaner readme than the repo's: nuget.org cannot resolve relative links, and the
+         package page is a funnel to GitHub rather than full documentation. -->
+    <None Include="../../README.nuget.md" Pack="true" PackagePath="/README.md" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

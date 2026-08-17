@@ -1,4 +1,4 @@
-<img src="./img/qubitnet.png" alt="Qubit.NET logo" style="height: 250px"/>
+<img src="https://raw.githubusercontent.com/InfoTCube/Qubit.NET/main/img/qubitnet.png" alt="Qubit.NET logo" width="420"/>
 
 # Qubit.NET
 

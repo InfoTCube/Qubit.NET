@@ -1,3 +1,4 @@
+using System.Globalization;
 using Qubit.NET.Gates;
 
 namespace Qubit.NET.Utilities;
@@ -16,17 +17,37 @@ internal static class Helpers
     /// <returns>A string representation of the complex number, in the form: "real + imaginary*i" or "real" or "imaginary*i".</returns>
     internal static string FormatComplex(double real, double imaginary)
     {
+        // Applying gates leaves amplitudes like 1e-17 where the exact answer is zero.
+        // Printing those makes state strings unreadable, so round them away.
+        if (System.Math.Abs(real) < Epsilon) real = 0;
+        if (System.Math.Abs(imaginary) < Epsilon) imaginary = 0;
+
         if (imaginary == 0 && real == 0)
             return String.Empty;
-        
+
         if (imaginary == 0)
-            return real.ToString();
-        
+            return Number(real);
+
         if (real == 0)
-            return $"{imaginary}i";
-        
-        return $"{real} + {imaginary}i";
+            return $"{Number(imaginary)}i";
+
+        // Keep the sign out of the term itself, so this reads "a - bi" not "a + -bi".
+        string sign = imaginary < 0 ? "-" : "+";
+
+        return $"{Number(real)} {sign} {Number(System.Math.Abs(imaginary))}i";
     }
+
+    /// <summary>
+    /// Amplitudes below this are treated as zero when formatting.
+    /// </summary>
+    private const double Epsilon = 1e-10;
+
+    /// <summary>
+    /// Formats a component to four decimal places using the invariant culture, so output
+    /// does not change with the machine's locale.
+    /// </summary>
+    private static string Number(double value) =>
+        value.ToString("0.####", CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Returns a string array representation of a quantum gate, where each element corresponds
