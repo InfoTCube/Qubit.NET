@@ -4,7 +4,30 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] — unreleased
+## [1.0.1]
+
+### Added
+
+- **.NET Standard 2.0** target, reaching .NET Framework 4.6.1+, Mono, Godot and Unity
+  2018–2020. The package now ships `netstandard2.0`, `netstandard2.1`, `net8.0` and `net10.0`.
+- A dedicated package readme. nuget.org cannot resolve relative links, so the repository
+  readme rendered there with a broken logo.
+
+### Changed
+
+- The package icon is now a square 512×512 image. nuget.org renders icons in a square slot,
+  which letterboxed the previous 1024×363 banner.
+
+### Fixed
+
+- State and matrix strings used the current culture's decimal separator and printed full
+  double precision, so `ToString()` returned `0,7071067811865475|00>` on any machine with a
+  comma separator. Output is now culture-invariant and rounded to four decimals.
+- Amplitudes that are only numerical noise are no longer printed: `H(0); H(0);` reads `|0>`
+  rather than including a `1E-17` term.
+- A negative imaginary part reads `0.5 - 0.5i` rather than `0.5 + -0.5i`.
+
+## [1.0.0]
 
 First packaged release. Qubit.NET is now installable with `dotnet add package Qubit.NET`
 and usable from Unity.
@@ -75,4 +98,8 @@ and usable from Unity.
   flags with the original, so gates applied to a copy also affected the source circuit.
 - Toffoli gates rendered their second control as a target marker in circuit diagrams.
 - `GetStringResult` threw an exception when every measurement count was zero.
+- State and matrix strings used the current culture's decimal separator and printed full
+  double precision, so `ToString()` returned `0,7071067811865475|00>` on a machine with a
+  comma separator. Output is now culture-invariant and rounded to four decimals, and
+  amplitudes that are numerical noise are no longer printed at all.
 - Renamed the internal `ApplayGate` to `ApplyGate`.

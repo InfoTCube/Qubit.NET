@@ -1,4 +1,4 @@
-<img src="./img/qubitnet.png" alt="Qubit.NET logo" style="height: 250px"/>
+<img src="https://raw.githubusercontent.com/InfoTCube/Qubit.NET/main/img/qubitnet.png" alt="Qubit.NET logo" width="420"/>
 
 # Qubit.NET
 
@@ -21,11 +21,12 @@ The state vector holds 2ⁿ complex amplitudes, so memory is the limit: **20 qub
 dotnet add package Qubit.NET
 ```
 
-Zero dependencies. Targets **.NET Standard 2.1**, **.NET 8** and **.NET 10**.
+Zero dependencies. Targets **.NET Standard 2.0 / 2.1**, **.NET 8** and **.NET 10**, so it’s
+also usable from .NET Framework 4.6.1+, Mono and Godot.
 
 ### 🎮 Unity
 
-Qubit.NET ships a `netstandard2.1` build, so it works in Unity 2021.2+. Either install it
+Qubit.NET ships `netstandard2.0` and `netstandard2.1` builds, so it works in Unity 2018 and later. Either install it
 through [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity), or drop
 `lib/netstandard2.1/Qubit.NET.dll` from the package into `Assets/Plugins/`.
 

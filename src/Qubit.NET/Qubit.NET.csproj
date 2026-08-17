@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- netstandard2.1 is what makes the library usable from Unity. -->
-    <TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
+    <!-- netstandard2.0 reaches .NET Framework 4.6.1+, Mono and Unity 2018-2020;
+         netstandard2.1 covers Unity 2021.2+. -->
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -11,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Qubit.NET</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Tymoteusz Marzec</Authors>
     <Description>A lightweight quantum computing simulation library for .NET. Build quantum circuits, apply gates, measure results, and draw ASCII circuit diagrams — no dependencies. Works in .NET and Unity.</Description>
     <PackageTags>quantum;quantum-computing;qubit;simulator;quantum-circuit;unity;csharp;dotnet</PackageTags>
@@ -19,7 +20,7 @@
     <PackageProjectUrl>https://github.com/InfoTCube/Qubit.NET</PackageProjectUrl>
     <RepositoryUrl>https://github.com/InfoTCube/Qubit.NET</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageIcon>qubitnet.png</PackageIcon>
+    <PackageIcon>qubitnet-icon-512.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>See CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
@@ -34,8 +35,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../img/qubitnet.png" Pack="true" PackagePath="/" Visible="false" />
-    <None Include="../../README.md" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="../../img/qubitnet-icon-512.png" Pack="true" PackagePath="/" Visible="false" />
+    <!-- A leaner readme than the repo's: nuget.org cannot resolve relative links, and the
+         package page is a funnel to GitHub rather than full documentation. -->
+    <None Include="../../README.nuget.md" Pack="true" PackagePath="/README.md" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
