@@ -8,6 +8,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write   # required for NuGet trusted publishing (OIDC)
+      contents: write   # required to create the GitHub release
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,10 +38,18 @@ jobs:
           dotnet pack src/Qubit.NET/Qubit.NET.csproj --no-build --configuration Release
           -p:Version=${{ env.VERSION }} --output ./artifacts
 
+      # Exchanges a GitHub OIDC token for a NuGet API key that lasts one hour, so no
+      # long-lived key is ever stored. Must run immediately before the push.
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push to NuGet
         run: >
           dotnet nuget push "./artifacts/*.nupkg"
-          --api-key ${{ secrets.NUGET_API_KEY }}
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
