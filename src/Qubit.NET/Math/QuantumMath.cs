@@ -9,6 +9,14 @@ namespace Qubit.NET.Math;
 internal static class QuantumMath
 {
     /// <summary>
+    /// Absolute tolerance used when comparing floating-point results against exact
+    /// values (unitarity checks, state normalization). Loose enough to absorb the
+    /// rounding of irrational gate entries such as 1/sqrt(2), tight enough to reject
+    /// genuinely wrong matrices.
+    /// </summary>
+    internal const double Tolerance = 1e-9;
+
+    /// <summary>
     /// Applies a single-qubit gate to a specific qubit in a multi-qubit state vector.
     /// </summary>
     /// <param name="gate">The 2x2 gate matrix.</param>
@@ -333,27 +341,17 @@ internal static class QuantumMath
             }
         }
 
-        // Step 3: Check if the result is the identity matrix
+        // Step 3: Check if the result is the identity matrix.
+        // Compared with a tolerance, not for exact equality: gates built from 1/sqrt(2)
+        // (Hadamard, CH, SX...) produce 1.0000000000000002 on the diagonal.
         for (int i = 0; i < rows; i++)
         {
             for (int j = 0; j < cols; j++)
             {
-                if (i == j)
-                {
-                    // Diagonal elements must be 1
-                    if (!result[i, j].Equals(Complex.One))
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    // Off-diagonal elements must be 0
-                    if (!result[i, j].Equals(Complex.Zero))
-                    {
-                        return false;
-                    }
-                }
+                Complex expected = i == j ? Complex.One : Complex.Zero;
+
+                if (Complex.Abs(result[i, j] - expected) > Tolerance)
+                    return false;
             }
         }
 

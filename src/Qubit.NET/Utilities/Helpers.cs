@@ -68,7 +68,8 @@ internal static class Helpers
             GateType.CRz => ["@", "Rz"],
             GateType.CU3 => ["@", "U3"],
             GateType.SWAP => ["X", "X"],
-            GateType.Toffoli => ["@", "+", "+"],
+            // Order matches the drawer's controls-then-targets iteration: two controls, one target.
+            GateType.Toffoli => ["@", "@", "+"],
             GateType.Fredkin => ["@", "X", "X"],
             GateType.Measure => ["M"],
             GateType.Custom => ["C"],

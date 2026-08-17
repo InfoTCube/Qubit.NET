@@ -34,28 +34,30 @@ public static class Simulator
             stateVector = QuantumMath.InitializeState(stateVector, init.QubitIndex, init.Alpha, init.Beta);
         }
 
-        GateType currentGateType = qc.Gates.First().GateType;
+        // Work on a local copy: Run must never mutate the circuit it is handed, or a
+        // second Run(qc, shots) would replay a circuit stripped of its own gates.
+        List<Gate> remainingGates = qc.Gates.ToList();
 
-        while (currentGateType != GateType.Measure && qc.Gates.Count != 0)
+        // Apply the deterministic prefix (everything before the first measurement) once,
+        // then replay only the rest per shot.
+        while (remainingGates.Count > 0 && remainingGates[0].GateType != GateType.Measure)
         {
-            Gate currentGate = qc.Gates.First();
-            
-            stateVector = ApplayGate(stateVector, currentGate, currentGateType);
+            Gate currentGate = remainingGates[0];
 
-            qc.Gates.RemoveAt(0);
-            
-            currentGateType = qc.Gates.Count > 0 ? qc.Gates.First().GateType : currentGateType;
+            stateVector = ApplyGate(stateVector, currentGate, currentGate.GateType);
+
+            remainingGates.RemoveAt(0);
         }
-        
+
         IList<(int[], int)> results = new List<(int[], int)>();
-        
+
         for (int i = 0; i < shots; i++)
         {
             Complex[] modStateVector = (Complex[])stateVector.Clone();
 
             int measurmentNumber = 0;
-            
-            foreach (var gate in qc.Gates)
+
+            foreach (var gate in remainingGates)
             {
                 if (gate.GateType == GateType.Measure)
                 {
@@ -70,7 +72,7 @@ public static class Simulator
                 }
                 else
                 {
-                    modStateVector = ApplayGate(modStateVector, gate, gate.GateType);
+                    modStateVector = ApplyGate(modStateVector, gate, gate.GateType);
                 }
             }
         }
@@ -90,21 +92,26 @@ public static class Simulator
     {
         StringBuilder sb = new StringBuilder();
         sb.Append("{");
+
+        bool any = false;
+
         for (int i = 0; i < result.Item1.Length; i++)
         {
             if(result.Item1[i] == 0)
                 continue;
-            
+
+            if (any) sb.Append(", ");
+
             sb.Append("'");
             sb.Append(Convert.ToString(i, 2).PadLeft(result.Item2, '0'));
             sb.Append("': ");
             sb.Append(result.Item1[i].ToString());
-            sb.Append(", ");
+
+            any = true;
         }
-        
-        sb.Remove(sb.Length - 2, 2);
+
         sb.Append("}");
-        
+
         return sb.ToString();
     }
 
@@ -115,7 +122,7 @@ public static class Simulator
     /// <param name="stateVector">The current quantum state vector.</param>
     /// <param name="currentGate">The gate to apply.</param>
     /// <param name="gateType">The type of gate being applied.</param>
-    private static Complex[] ApplayGate(Complex[] stateVector, Gate currentGate, GateType gateType)
+    private static Complex[] ApplyGate(Complex[] stateVector, Gate currentGate, GateType gateType)
     {
         switch (gateType)
         {

@@ -4,7 +4,9 @@
 
 # 🧠 C# Quantum Computing Simulation Library
 
-**Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It allows users to simulate quantum circuits up to 30 qubits, initialize qubits, apply common quantum gates, and measure results — all using a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
+**Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It lets you build quantum circuits, initialize qubits, apply common quantum gates, and measure results — all on a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
+
+The state vector holds 2ⁿ complex amplitudes, so memory is the limit: **20 qubits ≈ 16 MB, 24 ≈ 256 MB, 26 ≈ 1 GB** (the hard ceiling, set by the CLR's 2 GB single-array limit).
 
 ---
 
@@ -62,11 +64,14 @@ You can initialize any qubit to one of the predefined basis states:
 qc.Initialize(0, State.Minus);
 ```
 
-or in any custom state
+or in any custom state, given as amplitudes α and β:
 
 ```csharp
-qc.Initialize(0, new Complex(1, 1), new Complex(2, 2));
+// |ψ⟩ = (|0⟩ + i|1⟩) / √2
+qc.Initialize(0, new Complex(1 / Math.Sqrt(2), 0), new Complex(0, 1 / Math.Sqrt(2)));
 ```
+
+> ⚠️ The state must be normalized — `|α|² + |β|² = 1` — or an `ArgumentException` is thrown.
 
 > ⚠️ Initialization can only be done **before any gate is applied** to that qubit.  
 > This is internally tracked using a private `_isQubitModified` array.

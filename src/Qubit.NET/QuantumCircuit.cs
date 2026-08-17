@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.ObjectModel;
-using System.Numerics;
-using System.Security.AccessControl;
+﻿using System.Numerics;
 using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Math;
@@ -50,16 +47,25 @@ public class QuantumCircuit
     private readonly bool[] _isQubitModified;
 
     /// <summary>
+    /// Largest supported qubit count. The state vector holds 2^n <see cref="Complex"/>
+    /// values at 16 bytes each, and the CLR caps a single array at 2 GB, so 2^26 elements
+    /// (1 GB) is the hard ceiling. Circuits near this limit need
+    /// <c>gcAllowVeryLargeObjects</c> and several GB of free RAM.
+    /// </summary>
+    public const int MaxQubitCount = 26;
+
+    /// <summary>
     /// Initializes quantum circuit with specified number of qubits in 0 state.
     /// </summary>
-    /// <param name="qubitCount">Number of qubits. (0-30] qubits are supported.</param>
+    /// <param name="qubitCount">Number of qubits, from 1 to <see cref="MaxQubitCount"/>.</param>
     public QuantumCircuit(int qubitCount)
     {
         if (qubitCount <= 0)
-            throw new ArgumentException("Qubit count must be positive.");
-        if (qubitCount > 30)
-            throw new AggregateException("Qubit count can be at most 30.");
-        
+            throw new ArgumentOutOfRangeException(nameof(qubitCount), qubitCount, "Qubit count must be positive.");
+        if (qubitCount > MaxQubitCount)
+            throw new ArgumentOutOfRangeException(nameof(qubitCount), qubitCount,
+                $"Qubit count can be at most {MaxQubitCount}.");
+
         QubitCount = qubitCount;
         StateVector = new Complex[1 << qubitCount];
         StateVector[0] = new Complex(1, 0);
@@ -69,16 +75,19 @@ public class QuantumCircuit
     /// <summary>
     /// Creates a new instance of the <see cref="QuantumCircuit"/> class by copying the properties of the provided <paramref name="qc"/> object.
     /// Initializes the new quantum circuit with the same number of qubits and state vector as the original.
-    /// This constructor creates a deep copy, ensuring the new instance is independent of the original.
+    /// The state vector, gate list and initialization list are copied, so applying gates to
+    /// either circuit afterwards leaves the other untouched. The recorded <see cref="Gate"/>
+    /// entries themselves are shared, which is safe because they are never mutated after being appended.
     /// </summary>
     /// <param name="qc">The <see cref="QuantumCircuit"/> object to copy.</param>
     public QuantumCircuit(QuantumCircuit qc)
     {
         QubitCount = qc.QubitCount;
-        StateVector = qc.StateVector;
-        Gates = qc.Gates;
-        Initializations = qc.Initializations;
-        _isQubitModified = qc._isQubitModified;
+        StateVector = (Complex[])qc.StateVector.Clone();
+        Gates = new List<Gate>(qc.Gates);
+        Initializations = new List<InitialState>(qc.Initializations);
+        _isQubitModified = (bool[])qc._isQubitModified.Clone();
+        RandomSource = qc.RandomSource;
     }
 
     /// <summary>
@@ -164,16 +173,26 @@ public class QuantumCircuit
     /// <param name="qubit">The index of the qubit to initialize.</param>
     /// <param name="alpha">Amplitude for the |0⟩ component of the qubit.</param>
     /// <param name="beta">Amplitude for the |1⟩ component of the qubit.</param>
-    /// /// <param name="state">Optional description of the state.</param>
+    /// <param name="state">Optional description of the state.</param>
     /// <exception cref="QubitIndexOutOfRangeException">
     /// Thrown if the qubit index is out of range.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the state is not normalized, i.e. |α|² + |β|² ≠ 1.
     /// </exception>
     public void Initialize(int qubit, Complex alpha, Complex beta, State state = State.Custom)
     {
         CheckQubit(qubit);
-        
+
         if (_isQubitModified[qubit])
             throw new InvalidOperationException($"Qubit {qubit} has already been modified and cannot be re-initialized.");
+
+        double normSquared = alpha.Real * alpha.Real + alpha.Imaginary * alpha.Imaginary
+                             + beta.Real * beta.Real + beta.Imaginary * beta.Imaginary;
+
+        if (System.Math.Abs(normSquared - 1.0) > QuantumMath.Tolerance)
+            throw new ArgumentException(
+                $"A qubit state must be normalized: |alpha|^2 + |beta|^2 must equal 1, but was {normSquared}.");
 
         StateVector = QuantumMath.InitializeState(StateVector, qubit, alpha, beta);
         
