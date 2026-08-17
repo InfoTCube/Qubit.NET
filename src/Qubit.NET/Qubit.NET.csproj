@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- netstandard2.1 is what makes the library usable from Unity. -->
-    <TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
+    <!-- netstandard2.0 reaches .NET Framework 4.6.1+, Mono and Unity 2018-2020;
+         netstandard2.1 covers Unity 2021.2+. -->
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -11,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>Qubit.NET</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Tymoteusz Marzec</Authors>
     <Description>A lightweight quantum computing simulation library for .NET. Build quantum circuits, apply gates, measure results, and draw ASCII circuit diagrams — no dependencies. Works in .NET and Unity.</Description>
     <PackageTags>quantum;quantum-computing;qubit;simulator;quantum-circuit;unity;csharp;dotnet</PackageTags>

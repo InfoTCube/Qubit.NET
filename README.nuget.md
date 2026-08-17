@@ -15,7 +15,8 @@ OpenQASM so your circuit runs on real hardware. No dependencies.
 dotnet add package Qubit.NET
 ```
 
-Targets **.NET Standard 2.1**, **.NET 8** and **.NET 10**.
+Targets **.NET Standard 2.0 / 2.1**, **.NET 8** and **.NET 10** — so it also runs on
+.NET Framework 4.6.1+, Mono and Godot.
 
 ---
 
