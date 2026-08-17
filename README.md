@@ -285,6 +285,81 @@ QuantumCircuit qc = new QuantumCircuit(2);
 qc.RandomSource = new FixedRandomSource();
 ```
 
+### 🧪 Built-in algorithms
+
+```csharp
+using Qubit.NET.Circuits;
+
+// Grover search: finds the marked item in O(sqrt(N))
+var grover = Algorithms.Grover(2, c => c.CZ(0, 1));   // marks |11>
+Console.WriteLine(grover.ToHistogram());              // 11 | ####...####  1.000
+
+// Bernstein-Vazirani: recovers a hidden bit string in a single query
+var bv = Algorithms.BernsteinVazirani([true, false, true]);
+Console.WriteLine(bv.Measure(2, 1, 0));               // 101
+
+// Deutsch-Jozsa, teleportation, superdense coding, QFT
+var dj = Algorithms.DeutschJozsa(3, c => c.CNOT(0, 3));
+var tp = Algorithms.Teleportation(c => c.Ry(0, 0.9));
+var sd = Algorithms.SuperdenseCoding(true, false);
+
+qc.QFT();   // Quantum Fourier Transform, in place
+```
+
+Plus `BellStates.PhiPlus/PhiMinus/PsiPlus/PsiMinus/GHZ()`.
+
+---
+
+### 📤 OpenQASM export
+
+Export to OpenQASM 2.0 and run your circuit on real hardware through Qiskit or IBM Quantum:
+
+```csharp
+using Qubit.NET.Export;
+
+File.WriteAllText("teleport.qasm", Algorithms.Teleportation(c => c.Ry(0, 0.9)).ToQasm());
+```
+
+```qasm
+OPENQASM 2.0;
+include "qelib1.inc";
+
+qreg q[3];
+creg c[3];
+
+ry(0.9) q[0];
+h q[1];
+cx q[1],q[2];
+cx q[0],q[1];
+h q[0];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+if (c[1]==1) x q[2];
+if (c[0]==1) z q[2];
+```
+
+```python
+# Qiskit
+qc = QuantumCircuit.from_qasm_file("teleport.qasm")
+```
+
+---
+
+### 📊 Inspecting the state
+
+```csharp
+using Qubit.NET.Visualization;
+
+var (x, y, z) = qc.BlochVector(0);   // Bloch sphere coordinates — drive a Unity gizmo
+qc.QubitProbability(0);              // P(qubit 0 = |1>), tracing out the rest
+Console.WriteLine(qc.ToHistogram()); // ASCII bar chart of outcome probabilities
+```
+
+A qubit entangled with others sits inside the sphere — maximally entangled means the
+origin, which makes entanglement something you can actually *see*.
+
+---
+
 ## ⚡ Performance
 
 Gates are applied in place, so a circuit allocates one state vector regardless of how many
@@ -312,9 +387,14 @@ Memory is the real limit — the state vector holds 2ⁿ complex amplitudes at 1
 
 ## 📌 Future Roadmap
 
-- [ ] Entanglement entropy measurements
+- [x] Circuit export in QASM
+- [x] Mid-circuit measurement and classical feedforward
+- [x] Bloch sphere coordinates and probability histograms
+- [x] Built-in algorithms (Grover, Deutsch–Jozsa, Bernstein–Vazirani, QFT, teleportation)
 - [ ] Noise simulation (decoherence, damping)
-- [ ] Circuit export in QASM
+- [ ] Entanglement entropy measurements
+- [ ] QASM import
+- [ ] Multi-controlled gates and circuit inverses
 
 ---
 

@@ -25,6 +25,13 @@ and usable from Unity.
 - `MeasurementResult`, replacing the `(int[], int)` tuple returned by `Simulator.Run`. It
   exposes `Counts`, `Shots`, `Probability(outcome)` and `MostFrequent`.
 - `QuantumCircuit.Reset()`, returning a circuit to |0…0⟩ with its gate list cleared.
+- **OpenQASM 2.0 export** via `circuit.ToQasm()`, including `if (c[i]==v)` for conditional
+  gates, so circuits can be loaded into Qiskit and run on real hardware.
+- **Algorithms**: `Grover`, `DeutschJozsa`, `BernsteinVazirani`, `Teleportation`,
+  `SuperdenseCoding` and an in-place `QFT` extension.
+- **State inspection**: `BlochVector(qubit)` returns Bloch sphere coordinates (the origin
+  for a maximally entangled qubit), `QubitProbability(qubit)` gives a single-qubit marginal,
+  and `ToHistogram()` renders outcome probabilities as an ASCII bar chart.
 - Continuous integration and a tag-driven NuGet release workflow.
 - An xUnit test suite covering gate algebra, the textbook Bell and GHZ states, measurement
   statistics and collapse, circuit rendering, and a regression test for every bug below.

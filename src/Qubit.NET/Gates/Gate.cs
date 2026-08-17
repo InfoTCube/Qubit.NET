@@ -39,4 +39,10 @@ internal class Gate
     /// positionally matching <see cref="TargetQubits"/>.
     /// </summary>
     public int[] ClassicalBits { get; set; } = [];
+
+    /// <summary>
+    /// The angles a parameterized gate was built from, in declaration order. Kept because
+    /// recovering them from the matrix afterwards is lossy around wrapping and sign.
+    /// </summary>
+    public double[] Parameters { get; set; } = [];
 }
