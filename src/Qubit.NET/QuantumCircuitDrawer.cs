@@ -131,9 +131,16 @@ public static class QuantumCircuitDrawer
             
             var involvedQubits = controlQubits.Concat(targetQubits).ToList();
 
+            // A conditional gate depends on the measurement that wrote its classical bit,
+            // so it must be laid out after that wire's last gate and connected back to it.
+            // The bit is not in involvedQubits, which drives symbol placement, only layout.
+            var layoutQubits = gate.ConditionBit is { } conditionBit
+                ? involvedQubits.Append(conditionBit).ToList()
+                : involvedQubits;
+
             int farthestIndex = 0;
-            
-            foreach (int qubit in involvedQubits)
+
+            foreach (int qubit in layoutQubits)
             {
                 int current = 0;
 
@@ -141,7 +148,7 @@ public static class QuantumCircuitDrawer
                 {
                     current = gatePositions[circuit.QubitCount - 1 - qubit].Last().Item2 + 1;
                 }
-                
+
                 farthestIndex = current > farthestIndex ? current : farthestIndex;
             }
 
@@ -149,10 +156,10 @@ public static class QuantumCircuitDrawer
 
             while (conflict)
             {
-                if(involvedQubits.Count == 0) break;
-                
-                int minQubit = involvedQubits.Min();
-                int maxQubit = involvedQubits.Max();
+                if(layoutQubits.Count == 0) break;
+
+                int minQubit = layoutQubits.Min();
+                int maxQubit = layoutQubits.Max();
 
                 conflict = false;
                 
@@ -183,9 +190,11 @@ public static class QuantumCircuitDrawer
             while(widths.Count <= farthestIndex) widths.Add(0);
             widths[farthestIndex] = maxWidth > widths[farthestIndex] ? maxWidth : widths[farthestIndex];
 
-            if (involvedQubits.Count > 1)
+            // Connect every wire the gate spans, including the classical bit a conditional
+            // gate reads, so the dependency is visible.
+            if (layoutQubits.Count > 1)
             {
-                for (int i = circuit.QubitCount - 1 - involvedQubits.Max(); i <= circuit.QubitCount - 2 - involvedQubits.Min(); i++)
+                for (int i = circuit.QubitCount - 1 - layoutQubits.Max(); i <= circuit.QubitCount - 2 - layoutQubits.Min(); i++)
                 {
                     if (!involvedQubits.Contains(circuit.QubitCount-1-i))
                     {

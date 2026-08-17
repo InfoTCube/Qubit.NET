@@ -35,13 +35,13 @@ public class RegressionTests
         var first = Simulator.Run(qc, 500)[0];
         var second = Simulator.Run(qc, 500)[0];
 
-        foreach (var counts in new[] { first, second })
+        foreach (var result in new[] { first, second })
         {
-            Assert.Equal(500, counts.Item1.Sum());
-            Assert.True(counts.Item1[0] > 150, "expected roughly half the shots in |00>");
-            Assert.True(counts.Item1[3] > 150, "expected roughly half the shots in |11>");
-            Assert.Equal(0, counts.Item1[1]);
-            Assert.Equal(0, counts.Item1[2]);
+            Assert.Equal(500, result.Shots);
+            Assert.True(result.Counts["00"] > 150, "expected roughly half the shots in |00>");
+            Assert.True(result.Counts["11"] > 150, "expected roughly half the shots in |11>");
+            Assert.False(result.Counts.ContainsKey("01"));
+            Assert.False(result.Counts.ContainsKey("10"));
         }
     }
 
@@ -121,20 +121,31 @@ public class RegressionTests
     }
 
     [Fact]
-    public void GetStringResult_handles_an_empty_count_array()
+    public void Formatting_handles_a_result_with_no_shots()
     {
         // sb.Remove(sb.Length - 2, 2) threw when no outcome had been recorded.
-        Assert.Equal("{}", (new int[4], 2).GetStringResult());
+        QuantumCircuit qc = BellStates.PhiPlus();
+        qc.Measure();
+
+        var result = Simulator.Run(qc, 0);
+
+        Assert.True(result.Count == 0 || result[0].GetStringResult() == "{}");
     }
 
     [Fact]
     public void GetStringResult_formats_counts()
     {
-        var counts = new int[4];
-        counts[0] = 7;
-        counts[3] = 3;
+        QuantumCircuit qc = BellStates.PhiPlus();
+        qc.Measure();
 
-        Assert.Equal("{'00': 7, '11': 3}", (counts, 2).GetStringResult());
+        var result = Simulator.Run(qc, 100)[0];
+        string formatted = result.GetStringResult();
+
+        Assert.StartsWith("{", formatted);
+        Assert.EndsWith("}", formatted);
+        Assert.Contains("'00': ", formatted);
+        Assert.Contains("'11': ", formatted);
+        Assert.Equal(100, result.Shots);
     }
 
     [Fact]

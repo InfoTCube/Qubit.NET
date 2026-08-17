@@ -22,4 +22,21 @@ internal class Gate
 
     /// <summary>Control qubits, empty for uncontrolled gates.</summary>
     public int[] ControlQubits { get; set; } = [];
+
+    /// <summary>
+    /// Classical bit this gate is conditioned on, or null if it always runs.
+    /// Set by <see cref="QuantumCircuit.When"/> to express classical feedforward.
+    /// </summary>
+    public int? ConditionBit { get; set; }
+
+    /// <summary>
+    /// Value <see cref="ConditionBit"/> must hold for the gate to run.
+    /// </summary>
+    public int ConditionValue { get; set; }
+
+    /// <summary>
+    /// For measurement gates, the classical bit each measured qubit writes into,
+    /// positionally matching <see cref="TargetQubits"/>.
+    /// </summary>
+    public int[] ClassicalBits { get; set; } = [];
 }

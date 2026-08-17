@@ -17,6 +17,14 @@ and usable from Unity.
   drawer works without a console (Unity, ASP.NET, tests). `Draw()` still prints in color.
 - `QuantumGates.Format(matrix)` — the string-returning counterpart of `Print`.
 - `QuantumCircuit.MaxQubitCount` constant.
+- **Classical bits and feedforward**: `MeasureInto(qubit, classicalBit)` stores an outcome,
+  `ClassicalBit(i)` reads it back, and `When(classicalBit, value, body)` conditions gates on
+  it. Plain `Measure` fills the classical bit matching each qubit it measured. This is what
+  quantum teleportation, superdense coding and error correction need; there is deliberately
+  no separate `ClassicalRegister` type.
+- `MeasurementResult`, replacing the `(int[], int)` tuple returned by `Simulator.Run`. It
+  exposes `Counts`, `Shots`, `Probability(outcome)` and `MostFrequent`.
+- `QuantumCircuit.Reset()`, returning a circuit to |0…0⟩ with its gate list cleared.
 - Continuous integration and a tag-driven NuGet release workflow.
 - An xUnit test suite covering gate algebra, the textbook Bell and GHZ states, measurement
   statistics and collapse, circuit rendering, and a regression test for every bug below.
@@ -34,6 +42,9 @@ and usable from Unity.
 
 ### Changed
 
+- **Breaking**: `Simulator.Run` returns `IList<MeasurementResult>` rather than
+  `IList<(int[], int)>`. `GetStringResult()` still works, and `result.ToString()` now gives
+  the same text.
 - **Breaking**: `Examples.Example` is now `Circuits.BellStates`.
 - **Breaking**: `StateVector` may be mutated in place by gate application, so a reference
   held across a gate call is no longer a snapshot. Clone it if you need one.

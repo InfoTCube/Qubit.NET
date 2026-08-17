@@ -210,9 +210,58 @@ qc.H(0);
 qc.CNOT(0, 1);
 qc.Measure();
 
-string results = Simulator.Run(qc, 1000)[0].GetStringResult();
-Console.WriteLine(results);
+MeasurementResult result = Simulator.Run(qc, 1000)[0];
+
+Console.WriteLine(result);                    // {'00': 512, '11': 488}
+Console.WriteLine(result.Counts["00"]);       // 512
+Console.WriteLine(result.Probability("11"));  // 0.488
+Console.WriteLine(result.MostFrequent);       // 00
+Console.WriteLine(result.Shots);              // 1000
 ```
+
+`Simulator.Run` never modifies the circuit you hand it, so you can run the same circuit as
+many times as you like.
+
+---
+
+### 🔀 Classical bits and feedforward
+
+Measuring writes into a classical bit — one per qubit, so measuring qubit `q` fills bit `q`
+unless you say otherwise with `MeasureInto`. `When` then conditions later gates on that bit,
+which is what mid-circuit measurement and error correction need.
+
+```csharp
+qc.MeasureInto(qubit: 0, classicalBit: 0);
+qc.When(classicalBit: 0, value: 1, c => c.X(2));   // X(2) runs only if bit 0 came out 1
+```
+
+Conditional gates are always *recorded*, so `Simulator.Run` re-evaluates the condition on
+every shot against that shot's own outcomes.
+
+Quantum teleportation in full:
+
+```csharp
+var qc = new QuantumCircuit(3);
+
+qc.Ry(0, theta);        // the message on qubit 0
+
+qc.H(1);                // entangle qubits 1 and 2
+qc.CNOT(1, 2);
+
+qc.CNOT(0, 1);          // Bell-basis measurement of qubits 0 and 1
+qc.H(0);
+qc.MeasureInto(0, 0);
+qc.MeasureInto(1, 1);
+
+qc.When(1, 1, c => c.X(2));   // corrections
+qc.When(0, 1, c => c.Z(2));
+
+// qubit 2 now holds the state qubit 0 started in
+```
+
+> Qubit.NET deliberately has no separate `ClassicalRegister` type. The classical register in
+> Qiskit exists mainly to express feedforward and result layout; `When` and `MeasureInto`
+> cover both without making every circuit declare two registers up front.
 
 ---
 

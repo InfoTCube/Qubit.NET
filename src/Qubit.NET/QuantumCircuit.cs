@@ -51,6 +51,17 @@ public class QuantumCircuit
     private readonly bool[] _isQubitModified;
 
     /// <summary>
+    /// Classical bits holding measurement outcomes. One per qubit: measuring qubit q writes
+    /// into classical bit q unless <see cref="MeasureInto"/> says otherwise.
+    /// </summary>
+    private readonly int[] _classicalBits;
+
+    /// <summary>
+    /// The condition currently in force, set while inside a <see cref="When"/> body.
+    /// </summary>
+    private (int Bit, int Value)? _activeCondition;
+
+    /// <summary>
     /// Largest supported qubit count. The state vector holds 2^n <see cref="Complex"/>
     /// values at 16 bytes each, and the CLR caps a single array at 2 GB, so 2^26 elements
     /// (1 GB) is the hard ceiling. Circuits near this limit need
@@ -74,6 +85,7 @@ public class QuantumCircuit
         StateVector = new Complex[1 << qubitCount];
         StateVector[0] = new Complex(1, 0);
         _isQubitModified = new bool[qubitCount];
+        _classicalBits = new int[qubitCount];
     }
 
     /// <summary>
@@ -91,6 +103,7 @@ public class QuantumCircuit
         Gates = new List<Gate>(qc.Gates);
         Initializations = new List<InitialState>(qc.Initializations);
         _isQubitModified = (bool[])qc._isQubitModified.Clone();
+        _classicalBits = (int[])qc._classicalBits.Clone();
         RandomSource = qc.RandomSource;
     }
 
@@ -107,30 +120,141 @@ public class QuantumCircuit
         
         CheckIfDifferentQubits(qubits);
         
+        // Each measured qubit writes into the classical bit of the same index, so that
+        // When() can condition on it without any extra bookkeeping.
+        int[] measured = qubits.Length == 0 ? Enumerable.Range(0, QubitCount).ToArray() : qubits;
+
         Gate measure = new Gate()
         {
             GateType = GateType.Measure,
-            TargetQubits = qubits.Length == 0 ? Enumerable.Range(0, QubitCount).ToArray() : qubits
+            TargetQubits = measured,
+            ClassicalBits = measured
         };
-        
+
         Gates.Add(measure);
-        
+
         // If measuring all qubits, use much more efficient method
         if (qubits.Length == 0)
         {
             // Perform a measurement by sampling from the current state vector probabilities
             var result = QuantumMath.SampleMeasurement(StateVector, RandomSource);
-    
+
             // Collapse the quantum state to the measured state (collapse the superposition)
             StateVector = QuantumMath.CollapseToState(StateVector, result);
-            
+
+            for (int q = 0; q < QubitCount; q++)
+                _classicalBits[q] = (result >> q) & 1;
+
             return Convert.ToString(result, 2).PadLeft(QubitCount, '0');
         }
-        
+
         var partialResult = QuantumMath.SamplePartialMeasurement(StateVector, qubits, RandomSource);
         StateVector = QuantumMath.CollapseToPartialMeasurement(StateVector, qubits, partialResult);
-            
+
+        // SamplePartialMeasurement packs bits with the first listed qubit most significant.
+        for (int b = 0; b < qubits.Length; b++)
+            _classicalBits[qubits[b]] = (partialResult >> (qubits.Length - 1 - b)) & 1;
+
         return Convert.ToString(partialResult, 2).PadLeft(qubits.Length, '0');
+    }
+
+    /// <summary>
+    /// Measures a single qubit and stores the outcome in the given classical bit, so that
+    /// later gates can be conditioned on it with <see cref="When"/>.
+    /// </summary>
+    /// <param name="qubit">The index of the qubit to measure.</param>
+    /// <param name="classicalBit">The classical bit to store the outcome in.</param>
+    /// <returns>The measured value, 0 or 1.</returns>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown if either index is out of range.
+    /// </exception>
+    public int MeasureInto(int qubit, int classicalBit)
+    {
+        CheckQubit(qubit);
+        CheckClassicalBit(classicalBit);
+
+        Gates.Add(Record(new Gate
+        {
+            GateType = GateType.Measure,
+            TargetQubits = [qubit],
+            ClassicalBits = [classicalBit]
+        }));
+
+        int result = QuantumMath.SamplePartialMeasurement(StateVector, [qubit], RandomSource);
+        StateVector = QuantumMath.CollapseToPartialMeasurement(StateVector, [qubit], result);
+
+        _classicalBits[classicalBit] = result;
+
+        return result;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="body"/> with every gate it applies conditioned on a classical
+    /// bit, giving classical feedforward: the gates run only when the measured bit matches.
+    /// </summary>
+    /// <param name="classicalBit">The classical bit to test, written by a previous measurement.</param>
+    /// <param name="value">The value the bit must hold, 0 or 1.</param>
+    /// <param name="body">The gates to apply conditionally.</param>
+    /// <example>
+    /// Quantum teleportation's correction step:
+    /// <code>
+    /// qc.MeasureInto(0, 0);
+    /// qc.MeasureInto(1, 1);
+    /// qc.When(1, 1, c => c.X(2));
+    /// qc.When(0, 1, c => c.Z(2));
+    /// </code>
+    /// </example>
+    /// <remarks>
+    /// Gates inside the body are always recorded, so <see cref="Simulation.Simulator"/>
+    /// re-evaluates the condition on every shot. They are applied to this circuit's live
+    /// state vector only when the condition currently holds.
+    /// </remarks>
+    public void When(int classicalBit, int value, Action<QuantumCircuit> body)
+    {
+        CheckClassicalBit(classicalBit);
+
+        if (body is null) throw new ArgumentNullException(nameof(body));
+
+        var previous = _activeCondition;
+        _activeCondition = (classicalBit, value);
+
+        try
+        {
+            body(this);
+        }
+        finally
+        {
+            _activeCondition = previous;
+        }
+    }
+
+    /// <summary>
+    /// Reads a classical bit holding a previous measurement outcome.
+    /// </summary>
+    /// <param name="classicalBit">The classical bit to read.</param>
+    /// <returns>The stored value, 0 or 1. Bits never written read as 0.</returns>
+    public int ClassicalBit(int classicalBit)
+    {
+        CheckClassicalBit(classicalBit);
+
+        return _classicalBits[classicalBit];
+    }
+
+    /// <summary>
+    /// Returns the circuit to its initial state: every qubit back to |0⟩, and the gate list,
+    /// initializations and classical bits cleared.
+    /// </summary>
+    public void Reset()
+    {
+        StateVector = new Complex[1 << QubitCount];
+        StateVector[0] = Complex.One;
+
+        Gates.Clear();
+        Initializations.Clear();
+        Array.Clear(_isQubitModified, 0, _isQubitModified.Length);
+        Array.Clear(_classicalBits, 0, _classicalBits.Length);
+
+        _activeCondition = null;
     }
 
     /// <summary>
@@ -723,15 +847,39 @@ public class QuantumCircuit
     {
         CheckQubit(qubit);
 
-        Gates.Add(new Gate
+        Gates.Add(Record(new Gate
         {
             GateType = type,
             Matrix = matrix,
             TargetQubits = [qubit]
-        });
+        }));
+
+        if (!ConditionHolds()) return;
 
         ApplyGate(matrix, qubit);
     }
+
+    /// <summary>
+    /// Stamps the condition currently in force onto a gate before it is recorded.
+    /// </summary>
+    private Gate Record(Gate gate)
+    {
+        if (_activeCondition is { } condition)
+        {
+            gate.ConditionBit = condition.Bit;
+            gate.ConditionValue = condition.Value;
+        }
+
+        return gate;
+    }
+
+    /// <summary>
+    /// Whether the condition currently in force is satisfied by the classical bits as they
+    /// stand. Gates inside a <see cref="When"/> body are always recorded, but only applied
+    /// to the live state vector when this is true.
+    /// </summary>
+    private bool ConditionHolds() =>
+        _activeCondition is not { } condition || _classicalBits[condition.Bit] == condition.Value;
 
     /// <summary>
     /// Validates, records and applies a two-qubit controlled gate. Shared by every
@@ -749,13 +897,15 @@ public class QuantumCircuit
         if (targetQubit == controlQubit)
             throw new ArgumentException("Every gate argument must be a different Qubit");
 
-        Gates.Add(new Gate
+        Gates.Add(Record(new Gate
         {
             GateType = type,
             Matrix = matrix,
             TargetQubits = [targetQubit],
             ControlQubits = [controlQubit]
-        });
+        }));
+
+        if (!ConditionHolds()) return;
 
         StateVector = QuantumMath.ApplyControlledSingleQubitGate(
             StateVector, QuantumMath.ControlledCore(matrix), targetQubit, controlQubit);
@@ -808,6 +958,20 @@ public class QuantumCircuit
     {
         if (qubit < 0 || qubit >= QubitCount)
             throw new QubitIndexOutOfRangeException($"Invalid index ({qubit}): qubit index must be between [0 and {QubitCount})");
+    }
+
+    /// <summary>
+    /// Checks that a classical bit index is within the valid range [0, QubitCount).
+    /// </summary>
+    /// <param name="classicalBit">The index of the classical bit to check.</param>
+    /// <exception cref="QubitIndexOutOfRangeException">
+    /// Thrown when the index is outside the register.
+    /// </exception>
+    private void CheckClassicalBit(int classicalBit)
+    {
+        if (classicalBit < 0 || classicalBit >= QubitCount)
+            throw new QubitIndexOutOfRangeException(
+                $"Invalid index ({classicalBit}): classical bit index must be between [0 and {QubitCount})");
     }
     
     /// <summary>
