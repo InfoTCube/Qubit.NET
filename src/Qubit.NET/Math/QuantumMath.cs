@@ -25,7 +25,9 @@ internal static class QuantumMath
     /// <returns>The updated quantum state vector.</returns>
     internal static Complex[] ApplySingleQubitGate(Complex[] state, Complex[,] gate, int targetQubit)
     {
-        if (BitOperations.PopCount((uint)state.Length) != 1)
+        // Power-of-two test. Written by hand rather than with BitOperations.PopCount,
+        // which does not exist on netstandard2.1 (Unity).
+        if (state.Length == 0 || (state.Length & (state.Length - 1)) != 0)
             throw new ArgumentException("State vector length must be a power of 2.");
         
         if (gate.GetLength(0) != 2 || gate.GetLength(1) != 2)

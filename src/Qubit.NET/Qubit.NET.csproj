@@ -1,9 +1,45 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- netstandard2.1 is what makes the library usable from Unity. -->
+    <TargetFrameworks>netstandard2.1;net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Qubit.NET</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Tymoteusz Marzec</Authors>
+    <Description>A lightweight quantum computing simulation library for .NET. Build quantum circuits, apply gates, measure results, and draw ASCII circuit diagrams — no dependencies. Works in .NET and Unity.</Description>
+    <PackageTags>quantum;quantum-computing;qubit;simulator;quantum-circuit;unity;csharp;dotnet</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/InfoTCube/Qubit.NET</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/InfoTCube/Qubit.NET</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>qubitnet.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>See CHANGELOG.md</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Source Link: lets consumers step into the library's source while debugging. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../img/qubitnet.png" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
 
 </Project>

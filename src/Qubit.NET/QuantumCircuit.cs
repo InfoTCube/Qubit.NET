@@ -963,7 +963,9 @@ public class QuantumCircuit
         
         Gates.Add(customGate);
         
-        ApplyGate(matrix, qubits.Reverse().ToArray());
+        // Enumerable.Reverse spelled out: in C# 14 `qubits.Reverse()` binds to
+        // MemoryExtensions.Reverse(Span<T>), which reverses in place and returns void.
+        ApplyGate(matrix, Enumerable.Reverse(qubits).ToArray());
     }
     
     /// <summary>

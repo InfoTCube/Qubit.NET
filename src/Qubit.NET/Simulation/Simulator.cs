@@ -150,7 +150,7 @@ public static class Simulator
                 break;
             case GateType.Custom:
                 stateVector = QuantumMath.ApplyMultiQubitGate(stateVector, currentGate.Matrix,
-                    currentGate.TargetQubits.Reverse().ToArray());
+                    Enumerable.Reverse(currentGate.TargetQubits).ToArray());
                 break;
         }
 

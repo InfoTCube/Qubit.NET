@@ -1,16 +1,67 @@
+using System.Text;
 using Qubit.NET.Gates;
 using Qubit.NET.Utilities;
 
 namespace Qubit.NET;
 
+/// <summary>
+/// Renders quantum circuits as ASCII diagrams.
+/// </summary>
 public static class QuantumCircuitDrawer
 {
     /// <summary>
-    /// Draws an ASCII representation of the quantum circuit in the console.
+    /// Draws an ASCII representation of the quantum circuit in the console,
+    /// with gates highlighted using console colors.
     /// This includes gate positions across qubits and visual connections between them.
     /// </summary>
     /// <param name="circuit">The quantum circuit to draw.</param>
+    /// <remarks>
+    /// Requires a console. In environments without one (Unity, ASP.NET, tests),
+    /// use <see cref="ToDiagram"/> and write the string wherever you need it.
+    /// </remarks>
     public static void Draw(this QuantumCircuit circuit)
+    {
+        ConsoleColor defaultColor = Console.ForegroundColor;
+
+        foreach (string line in circuit.ToDiagram().Split('\n'))
+        {
+            // Qubit labels ("q0 (0): ") are yellow, gate glyphs are blue, wires stay plain.
+            // Connector-only lines carry no label, so bodyStart is 0 there.
+            int labelEnd = line.IndexOf(": ", StringComparison.Ordinal);
+            int bodyStart = labelEnd >= 0 ? labelEnd + 2 : 0;
+
+            if (labelEnd >= 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write(line.Substring(0, bodyStart));
+                Console.ForegroundColor = defaultColor;
+            }
+
+            foreach (char c in line.Substring(bodyStart))
+            {
+                bool glyph = c is '[' or ']' or '@' or '|' || (c != '─' && c != ' ' && c != '\r');
+
+                Console.ForegroundColor = glyph ? ConsoleColor.DarkBlue : defaultColor;
+                Console.Write(c);
+            }
+
+            Console.ForegroundColor = defaultColor;
+            Console.WriteLine();
+        }
+    }
+
+    /// <summary>
+    /// Builds an ASCII representation of the quantum circuit and returns it as a string.
+    /// This includes gate positions across qubits and visual connections between them.
+    /// </summary>
+    /// <param name="circuit">The quantum circuit to render.</param>
+    /// <returns>A multi-line string containing the circuit diagram.</returns>
+    /// <example>
+    /// <code>
+    /// Debug.Log(circuit.ToDiagram());   // Unity
+    /// </code>
+    /// </example>
+    public static string ToDiagram(this QuantumCircuit circuit)
     {
         IList<IList<(string, int)>> gatePositions = new List<IList<(string, int)>>();
         IList<IList<int>> barPositions = new List<IList<int>>();
@@ -19,10 +70,14 @@ public static class QuantumCircuitDrawer
         InitializeStructures(gatePositions, barPositions, circuit.QubitCount);
 
         int lastGate = AssignGatePositions(gatePositions, barPositions, gateWidths, circuit);
-        
-        PrintGates(gatePositions, barPositions, gateWidths, circuit, lastGate);
+
+        StringBuilder sb = new StringBuilder();
+
+        PrintGates(sb, gatePositions, barPositions, gateWidths, circuit, lastGate);
+
+        return sb.ToString();
     }
-    
+
     /// <summary>
     /// Initializes the data structures used for tracking gate symbols and bar positions
     /// for each qubit line in the quantum circuit.
@@ -145,8 +200,9 @@ public static class QuantumCircuitDrawer
     }
 
     /// <summary>
-    /// Renders a visual representation of the quantum circuit to the console.
+    /// Renders a visual representation of the quantum circuit into a string builder.
     /// </summary>
+    /// <param name="sb">The builder receiving the diagram.</param>
     /// <param name="gatePositions">A list of gate symbols and their positions for each qubit line.</param>
     /// <param name="barPositions">A list of vertical bar positions for multi-qubit gates.</param>
     /// <param name="widths">A list where each integer holds an additional width of a gate.</param>
@@ -154,86 +210,75 @@ public static class QuantumCircuitDrawer
     /// <param name="lastGate">The index of the rightmost gate, used for alignment and padding.</param>
     /// <remarks>
     /// This method draws each qubit line with its gates and initial state, using ASCII characters.
-    /// Gates are color-highlighted and aligned based on position. Multi-qubit gates are connected with vertical bars.
+    /// Multi-qubit gates are connected with vertical bars. Coloring is applied separately by
+    /// <see cref="Draw"/> so that this renderer stays free of any console dependency.
     /// </remarks>
-    private static void PrintGates(IList<IList<(string, int)>> gatePositions, IList<IList<int>> barPositions,
-        IList<int> widths, QuantumCircuit circuit, int lastGate)
+    private static void PrintGates(StringBuilder sb, IList<IList<(string, int)>> gatePositions,
+        IList<IList<int>> barPositions, IList<int> widths, QuantumCircuit circuit, int lastGate)
     {
-        ConsoleColor defaultColor = Console.ForegroundColor;
-
         int counter = -1;
         for (int i = circuit.QubitCount-1; i >= 0; i--)
         {
             InitialState? initialState = circuit.Initializations.FirstOrDefault(init => init.QubitIndex == i);
             char initState = initialState == null ? '0' : Helpers.InitialStateToCharRepresentation(initialState.BasicState);
-            
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"q{i} ({initState}): ");
-            Console.ForegroundColor = defaultColor;
-            
+
+            sb.Append($"q{i} ({initState}): ");
+
             foreach (var gatePos in gatePositions[circuit.QubitCount-1-i])
             {
                 int additionalWidth = widths.Skip(counter+1).Take(gatePos.Item2 - counter - 1).Sum();
-                Console.Write(new string('\u2500', ((gatePos.Item2-counter-1)*5)+additionalWidth));
+                sb.Append('\u2500', ((gatePos.Item2-counter-1)*5)+additionalWidth);
                 counter = gatePos.Item2;
-                
+
                 if (gatePos.Item1 == "|")
                 {
-                    Console.Write(new string('\u2500', 2));
-                    Console.ForegroundColor = ConsoleColor.DarkBlue;
-                    Console.Write("|");
-                    Console.ForegroundColor = defaultColor;
-                    Console.Write(new string('\u2500', 2+widths[counter]));
-                    continue;
-                } 
-                if (gatePos.Item1 == "@")
-                {
-                    Console.Write(new string('\u2500', 2));
-                    Console.ForegroundColor = ConsoleColor.DarkBlue;
-                    Console.Write("@");
-                    Console.ForegroundColor = defaultColor;
-                    Console.Write(new string('\u2500', (2+widths[counter])));
+                    sb.Append('\u2500', 2);
+                    sb.Append('|');
+                    sb.Append('\u2500', 2+widths[counter]);
                     continue;
                 }
-                
-                Console.Write("\u2500");
-                Console.ForegroundColor = ConsoleColor.DarkBlue;
-                Console.Write($"[{gatePos.Item1}]");
-                Console.ForegroundColor = defaultColor;
-                Console.Write(new string('\u2500', (2+widths[counter]-gatePos.Item1.Length)));
+                if (gatePos.Item1 == "@")
+                {
+                    sb.Append('\u2500', 2);
+                    sb.Append('@');
+                    sb.Append('\u2500', 2+widths[counter]);
+                    continue;
+                }
+
+                sb.Append('\u2500');
+                sb.Append('[').Append(gatePos.Item1).Append(']');
+                sb.Append('\u2500', 2+widths[counter]-gatePos.Item1.Length);
             }
 
             if (!gatePositions[circuit.QubitCount - 1 - i].Any())
             {
                 int additionalWidth = widths.Sum();
-                Console.Write(new string('\u2500', ((lastGate+1)*5)+additionalWidth));
-            } 
+                sb.Append('\u2500', ((lastGate+1)*5)+additionalWidth);
+            }
             else if (counter < lastGate)
             {
                 int additionalWidth = widths.Skip(counter+1).Take(lastGate - counter).Sum();
-                Console.Write(new string('\u2500', ((lastGate-counter)*5)+additionalWidth));
+                sb.Append('\u2500', ((lastGate-counter)*5)+additionalWidth);
             }
 
-            Console.WriteLine();
+            sb.AppendLine();
             counter = -1;
-            
-            Console.Write(new String(' ', 8));
+
+            sb.Append(' ', 8);
             foreach (var barPos in barPositions[circuit.QubitCount-1-i])
             {
                 if(i == 0) continue;
 
                 int additionalWidth = widths.Skip(counter+1).Take(barPos - counter - 1).Sum();
-                Console.Write(new string(' ', ((barPos-counter-1)*5)+additionalWidth));
+                sb.Append(' ', ((barPos-counter-1)*5)+additionalWidth);
                 counter = barPos;
-                
-                Console.Write(new string(' ', 2));
-                Console.ForegroundColor = ConsoleColor.DarkBlue;
-                Console.Write("|");
-                Console.ForegroundColor = defaultColor;
-                Console.Write(new string(' ', (2+widths[barPos])));
+
+                sb.Append(' ', 2);
+                sb.Append('|');
+                sb.Append(' ', 2+widths[barPos]);
             }
-            
-            Console.WriteLine();
+
+            sb.AppendLine();
             counter = -1;
         }
     }

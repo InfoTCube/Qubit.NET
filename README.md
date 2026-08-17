@@ -4,25 +4,37 @@
 
 # 🧠 C# Quantum Computing Simulation Library
 
+[![NuGet](https://img.shields.io/nuget/v/Qubit.NET.svg)](https://www.nuget.org/packages/Qubit.NET/)
+[![Downloads](https://img.shields.io/nuget/dt/Qubit.NET.svg)](https://www.nuget.org/packages/Qubit.NET/)
+[![CI](https://github.com/InfoTCube/Qubit.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/InfoTCube/Qubit.NET/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Qubit.NET** is a lightweight quantum circuit simulation library written in C#. It lets you build quantum circuits, initialize qubits, apply common quantum gates, and measure results — all on a classical computer. Perfect for learning, prototyping, or integrating quantum logic into .NET applications.
 
 The state vector holds 2ⁿ complex amplitudes, so memory is the limit: **20 qubits ≈ 16 MB, 24 ≈ 256 MB, 26 ≈ 1 GB** (the hard ceiling, set by the CLR's 2 GB single-array limit).
 
 ---
 
-### ✅ Requirements
-- .NET 6.0 or newer
-- `System.Numerics` (for complex numbers — included in .NET)
-
-### 📥 Setup
-Clone or download the repository:
+### 📥 Install
 
 ```bash
-git clone https://github.com/InfoTCube/Qubit.Net.git
-cd Qubit.NET
+dotnet add package Qubit.NET
 ```
 
-Add the project to your solution or include the `.cs` files (`QuantumCircuit.cs`, `QuantumGates.cs`, etc.) in your C# project.
+Zero dependencies. Targets **.NET Standard 2.1**, **.NET 8** and **.NET 10**.
+
+### 🎮 Unity
+
+Qubit.NET ships a `netstandard2.1` build, so it works in Unity 2021.2+. Either install it
+through [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity), or drop
+`lib/netstandard2.1/Qubit.NET.dll` from the package into `Assets/Plugins/`.
+
+Unity has no `Console`, so use the string-returning APIs:
+
+```csharp
+Debug.Log(qc.ToDiagram());                     // instead of qc.Draw()
+Debug.Log(QuantumGates.Format(QuantumGates.H)); // instead of QuantumGates.Print(...)
+```
 
 ---
 
@@ -45,6 +57,17 @@ qc.Draw();
 
 // Measure full state
 Console.WriteLine($"Measured: {qc.Measure()}"); // Possible: 00 or 11
+```
+
+`Draw()` prints a colored ASCII diagram to the console — `ToDiagram()` returns the same
+thing as a string:
+
+```
+q2 (0): ───────────[+]──[X]──[M]─
+                    |    |    |
+q1 (0): ──────[+]───@────|───[M]─
+               |    |    |    |
+q0 (0): ─[H]───@────@───[X]──[M]─
 ```
 
 ---
